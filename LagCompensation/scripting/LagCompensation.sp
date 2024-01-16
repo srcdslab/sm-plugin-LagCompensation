@@ -25,7 +25,7 @@ bool g_bLateLoad = false;
 bool g_bHasPhysHooks = true;
 bool g_bHasOnEntitySpawned = false;
 bool g_bCheckPing = false;
-bool g_bCompenseOnlyBosses = false;
+bool g_bCompenseEntityClass = false;
 
 // Don't change this.
 #define MAX_EDICTS 2048
@@ -161,15 +161,17 @@ Handle g_hCookie_LagCompMessages;
 bool g_bDisableLagComp[MAXPLAYERS + 1];
 bool g_bLagCompMessages[MAXPLAYERS + 1];
 int g_iDisableLagComp[MAXPLAYERS + 1];
-ConVar g_cvCompenseOnlyBosses;
+ConVar g_cvCompenseEntityClass;
 ConVar g_cvCheckUserPing;
 ConVar g_cvMinimumPing;
 
 public void OnPluginStart()
 {
-	g_cvCompenseOnlyBosses = CreateConVar("sm_lagcomp_onlybosses", "0", "Only lagcompensate bosses [0 = Bosses and triggers | 1 = Bosses only]", _, true, 0.0);
-	g_cvCheckUserPing = CreateConVar("sm_lagcomp_checkuserping", "0", "Check user's ping before lagcompensating them [0 = Disabled | 1 = Enabled]", _, true, 0.0);
-	g_cvMinimumPing = CreateConVar("sm_lagcomp_ping", "180", "Minimum ping threshold before lagcomp is can applies to the client", _, true, 0.0);
+	LoadTranslations("common.phrases");
+
+	g_cvCompenseEntityClass = CreateConVar("sm_lagcomp_entityclass", "0", "Only lagcompensate: \n0 = All \n1 = func_physbox only", _, true, 0.0, true, 1.0);
+	g_cvCheckUserPing = CreateConVar("sm_lagcomp_checkuserping", "0", "Check user's ping before lagcompensating them [0 = Disabled | 1 = Enabled]", _, true, 0.0, true, 1.0);
+	g_cvMinimumPing = CreateConVar("sm_lagcomp_ping", "180", "Minimum ping threshold to apply lagcomp on a client", _, true, 0.0);
 
 	AutoExecConfig(true);
 
@@ -337,7 +339,7 @@ public void OnPluginStart()
 	// Capability provider from https://github.com/alliedmodders/sourcemod/pull/1078
 	g_bHasOnEntitySpawned = GetFeatureStatus(FeatureType_Capability, "SDKHook_OnEntitySpawned") == FeatureStatus_Available;
 
-	HookConVarChange(g_cvCompenseOnlyBosses, OnConVarChanged);
+	HookConVarChange(g_cvCompenseEntityClass, OnConVarChanged);
 	HookConVarChange(g_cvCheckUserPing, OnConVarChanged);
 	HookConVarChange(g_cvMinimumPing, OnConVarChanged);
 
@@ -397,15 +399,15 @@ public void OnPluginEnd()
 
 public void OnConfigsExecuted()
 {
-	g_bCompenseOnlyBosses = GetConVarBool(g_cvCompenseOnlyBosses);
+	g_bCompenseEntityClass = GetConVarBool(g_cvCompenseEntityClass);
 	g_bCheckPing = GetConVarBool(g_cvCheckUserPing);
 	g_iMinPing = GetConVarInt(g_cvMinimumPing);
 }
 
 void OnConVarChanged(ConVar convar, const char[] oldValue, const char[] newValue)
 {
-	if (convar == g_cvCompenseOnlyBosses)
-		g_bCompenseOnlyBosses = GetConVarBool(convar);
+	if (convar == g_cvCompenseEntityClass)
+		g_bCompenseEntityClass = GetConVarBool(convar);
 	else if (convar == g_cvCheckUserPing)
 		g_bCheckPing = GetConVarBool(convar);
 	else if (convar == g_cvMinimumPing)
@@ -524,7 +526,7 @@ public void OnEntityCreated(int entity, const char[] classname)
 		DHookEntity(g_hAcceptInput, true, entity);
 	}
 
-	if (!g_bHasOnEntitySpawned && (!strncmp(classname, "func_physbox", 12, false) || (!g_bCompenseOnlyBosses && strcmp(classname, "trigger_hurt", false) == 0 ||
+	if (!g_bHasOnEntitySpawned && (!strncmp(classname, "func_physbox", 12, false) || (g_bCompenseEntityClass && strcmp(classname, "trigger_hurt", false) == 0 ||
 		strcmp(classname, "trigger_push", false) == 0 || strcmp(classname, "trigger_teleport", false) == 0)))
 	{
 		SDKHook(entity, SDKHook_SpawnPost, OnSDKHookEntitySpawnPost);
@@ -633,7 +635,7 @@ bool CheckEntityForLagComp(int entity, const char[] classname, bool bRecursive=f
 
 	bool bTrigger = false;
 
-	if (!g_bCompenseOnlyBosses)
+	if (g_bCompenseEntityClass)
 		bTrigger = strcmp(classname, "trigger_hurt", false) == 0 || strcmp(classname, "trigger_push", false) == 0 || strcmp(classname, "trigger_teleport", false) == 0;
 
 	bool bPhysbox = !strncmp(classname, "func_physbox", 12, false);
@@ -1121,6 +1123,7 @@ bool AddEntityForLagCompensation(int iEntity, bool bLateKill)
 	if(g_iNumEntities == MAX_ENTITIES)
 	{
 		PrintToBoth("[%d] OUT OF LAGCOMP SLOTS entity %d (%s)\"%s\"(#%d)", GetGameTickCount(), iEntity, sClassname, sTargetname, iHammerID);
+		LogError("OUT OF LAGCOMP SLOTS entity %d (%s)\"%s\"(#%d)", iEntity, sClassname, sTargetname, iHammerID);
 		return false;
 	}
 
@@ -1347,15 +1350,13 @@ stock void PrintToBoth(const char[] format, any ...)
 	VFormat(buffer, sizeof(buffer), format, 2);
 	LogMessage(buffer);
 
-	/*
 	for(int client = 1; client <= MaxClients; client++)
 	{
-		if(IsClientInGame(client))
+		if (IsClientInGame(client) && g_bLagCompMessages[client])
 		{
 			PrintToChat(client, "%s", buffer);
 		}
 	}
-	*/
 }
 
 public Action DisableLagCompTimer(Handle timer)
@@ -1368,7 +1369,7 @@ public Action DisableLagCompTimer(Handle timer)
 		// https://github.com/ValveSoftware/source-sdk-2013/blob/master/sp/src/game/server/util.cpp#L747
 		if (g_bCheckPing)
 		{
-			int iAvgPing = RoundFloat(GetClientLatency(client, NetFlow_Outgoing) * 1000);
+			int iAvgPing = RoundFloat(GetClientAvgLatency(client, NetFlow_Outgoing) * 1000);
 
 			if (iAvgPing > g_iMinPing)
 			{
@@ -1432,25 +1433,26 @@ public Action CheckLagComp(int client, int args)
 		return Plugin_Handled;
 	}
 
+	int target = -1;
 	char sEnable[64];
-	FormatEx(sEnable, sizeof(sEnable), "Enabled (%s)", g_bCompenseOnlyBosses ? "bosses only" : "bosses and triggers");
+	FormatEx(sEnable, sizeof(sEnable), "enabled (%s)", g_bCompenseEntityClass ? "Triggers and func_physbox" : "func_physbox only");
 
 	if (args == 0)
-		PrintToChat(client, "\x04[LagCompensation] \x01LagCompensation is %s for %N.", g_bDisableLagComp[client] ? "disabled" : sEnable, client);
-		
-	if (args == 1)
+		target = client;
+	else
 	{
 		char arg1[65];
 		GetCmdArg(1, arg1, sizeof(arg1));
-		int target = FindTarget(client, arg1, false, false);
+		target = FindTarget(client, arg1, true, false);
 		if (target == -1)
 		{
+			ReplyToCommand(client, "\x04[LagCompensation] \x01Invalid target.");
 			return Plugin_Handled;
 		}
-		
-		PrintToChat(client, "\x04[LagCompensation] \x01LagCompensation is %s for %N.", g_bDisableLagComp[target] ? "disabled" : sEnable, target);
 	}
-	
+
+	PrintToChat(client, "\x04[LagCompensation] \x01LagCompensation is %s for \x05%N", g_bDisableLagComp[target] ? "disabled" : sEnable, target);
+
 	return Plugin_Handled;
 }
 
