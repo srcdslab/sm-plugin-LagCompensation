@@ -169,7 +169,7 @@ public void OnPluginStart()
 {
 	LoadTranslations("common.phrases");
 
-	g_cvCompenseEntityClass = CreateConVar("sm_lagcomp_entityclass", "0", "Only lagcompensate: \n0 = All \n1 = func_physbox only", _, true, 0.0, true, 1.0);
+	g_cvCompenseEntityClass = CreateConVar("sm_lagcomp_entityclass", "0", "Only lagcompensate: [0 = All | 1 = func_physbox only]", _, true, 0.0, true, 1.0);
 	g_cvCheckUserPing = CreateConVar("sm_lagcomp_checkuserping", "0", "Check user's ping before lagcompensating them [0 = Disabled | 1 = Enabled]", _, true, 0.0, true, 1.0);
 	g_cvMinimumPing = CreateConVar("sm_lagcomp_ping", "180", "Minimum ping threshold to apply lagcomp on a client", _, true, 0.0);
 
