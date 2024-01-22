@@ -25,7 +25,7 @@ bool g_bLateLoad = false;
 bool g_bHasPhysHooks = true;
 bool g_bHasOnEntitySpawned = false;
 bool g_bCheckPing = false;
-bool g_bCompenseEntityClass = false;
+int g_iCompenseEntityClass;
 
 // Don't change this.
 #define MAX_EDICTS 2048
@@ -399,7 +399,7 @@ public void OnPluginEnd()
 
 public void OnConfigsExecuted()
 {
-	g_bCompenseEntityClass = GetConVarBool(g_cvCompenseEntityClass);
+	g_iCompenseEntityClass = GetConVarInt(g_cvCompenseEntityClass);
 	g_bCheckPing = GetConVarBool(g_cvCheckUserPing);
 	g_iMinPing = GetConVarInt(g_cvMinimumPing);
 }
@@ -407,7 +407,7 @@ public void OnConfigsExecuted()
 void OnConVarChanged(ConVar convar, const char[] oldValue, const char[] newValue)
 {
 	if (convar == g_cvCompenseEntityClass)
-		g_bCompenseEntityClass = GetConVarBool(convar);
+		g_iCompenseEntityClass = GetConVarInt(convar);
 	else if (convar == g_cvCheckUserPing)
 		g_bCheckPing = GetConVarBool(convar);
 	else if (convar == g_cvMinimumPing)
@@ -526,7 +526,7 @@ public void OnEntityCreated(int entity, const char[] classname)
 		DHookEntity(g_hAcceptInput, true, entity);
 	}
 
-	if (!g_bHasOnEntitySpawned && (!strncmp(classname, "func_physbox", 12, false) || (g_bCompenseEntityClass && strcmp(classname, "trigger_hurt", false) == 0 ||
+	if (!g_bHasOnEntitySpawned && (!strncmp(classname, "func_physbox", 12, false) || (g_iCompenseEntityClass == 0 && strcmp(classname, "trigger_hurt", false) == 0 ||
 		strcmp(classname, "trigger_push", false) == 0 || strcmp(classname, "trigger_teleport", false) == 0)))
 	{
 		SDKHook(entity, SDKHook_SpawnPost, OnSDKHookEntitySpawnPost);
@@ -635,7 +635,7 @@ bool CheckEntityForLagComp(int entity, const char[] classname, bool bRecursive=f
 
 	bool bTrigger = false;
 
-	if (g_bCompenseEntityClass)
+	if (g_iCompenseEntityClass == 0)
 		bTrigger = strcmp(classname, "trigger_hurt", false) == 0 || strcmp(classname, "trigger_push", false) == 0 || strcmp(classname, "trigger_teleport", false) == 0;
 
 	bool bPhysbox = !strncmp(classname, "func_physbox", 12, false);
@@ -1411,7 +1411,7 @@ public void ToggleLagCompSettings(int client)
 	g_bDisableLagComp[client] = !g_bDisableLagComp[client];
 	SetClientCookie(client, g_hCookie_DisableLagComp, g_bDisableLagComp[client] ? "1" : "");
 
-	PrintToChat(client, "\x04[LagCompensation]\x01 LagCompensation has been %s.", g_bDisableLagComp[client] ? "disabled" : "enabled");
+	PrintToChat(client, "\x04[LagCompensation]\x01 LagCompensation has been %s.", g_bDisableLagComp[client] ? "enabled" : "disabled");
 }
 
 public void ToggleLagCompMessages(int client)
@@ -1422,7 +1422,7 @@ public void ToggleLagCompMessages(int client)
 	g_bLagCompMessages[client] = !g_bLagCompMessages[client];
 	SetClientCookie(client, g_hCookie_LagCompMessages, g_bLagCompMessages[client] ? "1" : "");
 
-	PrintToChat(client, "\x04[LagCompensation]\x01 LagCompensation messages have been %s.", g_bLagCompMessages[client] ? "disabled" : "enabled");
+	PrintToChat(client, "\x04[LagCompensation]\x01 LagCompensation messages have been %s.", g_bLagCompMessages[client] ? "enabled" : "disabled");
 }
 
 public Action CheckLagComp(int client, int args)
@@ -1435,7 +1435,7 @@ public Action CheckLagComp(int client, int args)
 
 	int target = -1;
 	char sEnable[64];
-	FormatEx(sEnable, sizeof(sEnable), "enabled (%s)", g_bCompenseEntityClass ? "Triggers and func_physbox" : "func_physbox only");
+	FormatEx(sEnable, sizeof(sEnable), "enabled (%s)", g_iCompenseEntityClass == 0 ? "Triggers and func_physbox" : "func_physbox only");
 
 	if (args == 0)
 		target = client;
@@ -1444,11 +1444,12 @@ public Action CheckLagComp(int client, int args)
 		char arg1[65];
 		GetCmdArg(1, arg1, sizeof(arg1));
 		target = FindTarget(client, arg1, true, false);
-		if (target == -1)
-		{
-			ReplyToCommand(client, "\x04[LagCompensation] \x01Invalid target.");
-			return Plugin_Handled;
-		}
+	}
+
+	if (target == -1)
+	{
+		ReplyToCommand(client, "\x04[LagCompensation] \x01Invalid target.");
+		return Plugin_Handled;
 	}
 
 	PrintToChat(client, "\x04[LagCompensation] \x01LagCompensation is %s for \x05%N", g_bDisableLagComp[target] ? "disabled" : sEnable, target);
@@ -1464,7 +1465,7 @@ public void ShowSettingsMenu(int client)
 
 	char buffer[128], msg_buffer[128];
 	Format(buffer, sizeof(buffer), "LagCompensation: %s", g_bDisableLagComp[client] ? "Disabled" : "Enabled");
-	Format(msg_buffer, sizeof(msg_buffer), "LagCompensation Messages: %s", g_bLagCompMessages[client] ? "Disabled" : "Enabled");
+	Format(msg_buffer, sizeof(msg_buffer), "LagCompensation Messages: %s", g_bLagCompMessages[client] ? "Enabled" : "Disabled");
 
 	menu.AddItem("0", buffer);
 	menu.AddItem("1", msg_buffer);
