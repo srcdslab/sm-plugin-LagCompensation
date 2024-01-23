@@ -1120,7 +1120,7 @@ bool AddEntityForLagCompensation(int iEntity, bool bLateKill)
 
 	int iHammerID = GetEntProp(iEntity, Prop_Data, "m_iHammerID");
 
-	if(g_iNumEntities == MAX_ENTITIES)
+	if(g_iNumEntities >= MAX_ENTITIES)
 	{
 		PrintToBoth("[%d] OUT OF LAGCOMP SLOTS entity %d (%s)\"%s\"(#%d)", GetGameTickCount(), iEntity, sClassname, sTargetname, iHammerID);
 		LogError("OUT OF LAGCOMP SLOTS entity %d (%s)\"%s\"(#%d)", iEntity, sClassname, sTargetname, iHammerID);
@@ -1411,7 +1411,7 @@ public void ToggleLagCompSettings(int client)
 	g_bDisableLagComp[client] = !g_bDisableLagComp[client];
 	SetClientCookie(client, g_hCookie_DisableLagComp, g_bDisableLagComp[client] ? "1" : "");
 
-	PrintToChat(client, "\x04[LagCompensation]\x01 LagCompensation has been %s.", g_bDisableLagComp[client] ? "enabled" : "disabled");
+	PrintToChat(client, "\x04[LagCompensation]\x01 LagCompensation has been %s.", g_bDisableLagComp[client] ? "disabled" : "enabled");
 }
 
 public void ToggleLagCompMessages(int client)
