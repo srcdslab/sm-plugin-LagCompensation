@@ -18,7 +18,7 @@ public Plugin myinfo =
 	name 			= "LagCompensation",
 	author 			= "BotoX, Vauff, .Rushaway, maxime1907",
 	description 	= "",
-	version 		= "1.0.6",
+	version 		= "1.0.7",
 	url 			= ""
 };
 
@@ -1408,7 +1408,7 @@ public Action OnToggleLagCompSettings(int client, int args)
 
 public void ToggleLagCompSettings(int client)
 {
-	if(!client)
+	if(!client || !IsClientInGame(client) || IsFakeClient(client))
 		return;
 
 	g_bDisableLagComp[client] = !g_bDisableLagComp[client];
@@ -1419,7 +1419,7 @@ public void ToggleLagCompSettings(int client)
 
 public void ToggleLagCompMessages(int client)
 {
-	if(!client)
+	if(!client || !IsClientInGame(client) || IsFakeClient(client))
 		return;
 
 	g_bLagCompMessages[client] = !g_bLagCompMessages[client];
