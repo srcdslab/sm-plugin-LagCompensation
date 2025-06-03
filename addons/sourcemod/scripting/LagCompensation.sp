@@ -18,7 +18,7 @@ public Plugin myinfo =
 	name 			= "LagCompensation",
 	author 			= "BotoX, Vauff, .Rushaway, maxime1907",
 	description 	= "",
-	version 		= "1.0.7",
+	version 		= "1.0.8",
 	url 			= ""
 };
 
@@ -104,6 +104,7 @@ enum struct EntityLagData
 	int iNotMoving;
 	bool bRestore;
 	bool bLateKill;
+	char sClassname[64];
 }
 
 LagRecord g_aaLagRecords[MAX_ENTITIES][MAX_RECORDS];
@@ -160,8 +161,10 @@ int g_aBlockTriggerMoved[MAX_EDICTS / 32];
 int g_aBlacklisted[MAX_EDICTS / 32];
 
 Handle g_hCookie_DisableLagComp;
+Handle g_hCookie_LagCompLasers;
 Handle g_hCookie_LagCompMessages;
 bool g_bDisableLagComp[MAXPLAYERS + 1];
+bool g_bPlayerLaserCompensated[MAXPLAYERS + 1];
 bool g_bLagCompMessages[MAXPLAYERS + 1];
 int g_iDisableLagComp[MAXPLAYERS + 1];
 ConVar g_cvCompenseEntityClass;
@@ -348,9 +351,11 @@ public void OnPluginStart()
 
 
 	g_hCookie_DisableLagComp = RegClientCookie("disable_lagcomp", "Client LagComp Status", CookieAccess_Private);
+	g_hCookie_LagCompLasers = RegClientCookie("lagcomp_lasers", "LagCompensation Lasers", CookieAccess_Private);
 	g_hCookie_LagCompMessages = RegClientCookie("lagcomp_messages", "Print LagComp messages in chat", CookieAccess_Private);
 	RegConsoleCmd("sm_lagcomp", OnToggleLagCompSettings);
 	RegConsoleCmd("sm_0ping", OnToggleLagCompSettings);
+	RegConsoleCmd("sm_0pinglasers", OnToggleLagCompLasersSettings);
 	RegConsoleCmd("sm_checklag", CheckLagComp);
 	SetCookieMenuItem(MenuHandler_CookieMenu, 0, "LagCompensation");
 
@@ -487,6 +492,7 @@ public void OnMapEnd()
 public void OnClientConnected(int client)
 {
 	g_bDisableLagComp[client] = false;
+	g_bPlayerLaserCompensated[client] = false;
 	g_iDisableLagComp[client] = 0;
 	g_aLerpTicks[client] = 0;
 }
@@ -494,10 +500,36 @@ public void OnClientConnected(int client)
 public void OnClientCookiesCached(int client)
 {
 	char sBuffer[16];
+
+	// Enable lagcomp by default
 	GetClientCookie(client, g_hCookie_DisableLagComp, sBuffer, sizeof(sBuffer));
-	g_bDisableLagComp[client] = StringToInt(sBuffer) != 0;
+	if (sBuffer[0] == '\0')
+	{
+		g_bDisableLagComp[client] = false;
+		SetClientCookie(client, g_hCookie_DisableLagComp, "0");
+	}
+	else
+		g_bDisableLagComp[client] = StringToInt(sBuffer) != 0;
+
+	// Enable laser compensation by default
+	GetClientCookie(client, g_hCookie_LagCompLasers, sBuffer, sizeof(sBuffer));
+	if (sBuffer[0] == '\0')
+	{
+		g_bPlayerLaserCompensated[client] = true;
+		SetClientCookie(client, g_hCookie_LagCompLasers, "1");
+	}
+	else
+		g_bPlayerLaserCompensated[client] = StringToInt(sBuffer) != 0;
+
+	// Disable lagcomp messages by default
 	GetClientCookie(client, g_hCookie_LagCompMessages, sBuffer, sizeof(sBuffer));
-	g_bLagCompMessages[client] = StringToInt(sBuffer) != 0;
+	if (sBuffer[0] == '\0')
+	{
+		g_bLagCompMessages[client] = false;
+		SetClientCookie(client, g_hCookie_LagCompMessages, "0");
+	}
+	else
+		g_bLagCompMessages[client] = StringToInt(sBuffer) != 0;
 }
 
 public void OnClientSettingsChanged(int client)
@@ -512,6 +544,7 @@ public void OnClientSettingsChanged(int client)
 public void OnClientDisconnect(int client)
 {
 	g_bDisableLagComp[client] = false;
+	g_bPlayerLaserCompensated[client] = false;
 	g_iDisableLagComp[client] = 0;
 }
 
@@ -877,7 +910,7 @@ public void OnRunThinkFunctions(bool simulating)
 
 public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3], float angles[3], int &weapon, int &subtype, int &cmdnum, int &tickcount, int &seed, int mouse[2])
 {
-	if(!IsPlayerAlive(client) || IsFakeClient(client))
+	if(!IsClientInGame(client) || !IsPlayerAlive(client) || IsFakeClient(client))
 		return Plugin_Continue;
 
 	int iTargetTick = tickcount - g_aLerpTicks[client];
@@ -925,6 +958,10 @@ public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3
 		}
 
 		if(g_aEntityLagData[i].iNotMoving >= MAX_RECORDS)
+			continue;
+
+		// Verify if the client have compensated the lasers
+		if (!g_bPlayerLaserCompensated[client] || g_iCompenseEntityClass == 0 && strcmp(g_aEntityLagData[i].sClassname, "trigger_hurt", false) != 0 || strcmp(g_aEntityLagData[i].sClassname, "trigger_push", false) != 0 || strcmp(g_aEntityLagData[i].sClassname, "trigger_teleport", false) != 0)
 			continue;
 
 		int iRecord = iDelta;
@@ -1144,6 +1181,7 @@ bool AddEntityForLagCompensation(int iEntity, bool bLateKill)
 	g_aEntityLagData[i].iNotMoving = MAX_RECORDS;
 	g_aEntityLagData[i].bRestore = false;
 	g_aEntityLagData[i].bLateKill = bLateKill;
+	g_aEntityLagData[i].sClassname = sClassname;
 
 	if(bLateKill)
 	{
@@ -1355,9 +1393,9 @@ stock void PrintToBoth(const char[] format, any ...)
 
 	for(int client = 1; client <= MaxClients; client++)
 	{
-		if (IsClientInGame(client) && g_bLagCompMessages[client])
+		if (IsClientInGame(client) && g_bLagCompMessages[client] && CheckCommandAccess(client, "sm_lagged", ADMFLAG_ROOT))
 		{
-			PrintToChat(client, "%s", buffer);
+			PrintToConsole(client, buffer);
 		}
 	}
 }
@@ -1406,6 +1444,12 @@ public Action OnToggleLagCompSettings(int client, int args)
 	return Plugin_Handled;
 }
 
+public Action OnToggleLagCompLasersSettings(int client, int args)
+{
+	ToggleLagCompLasers(client);
+	return Plugin_Handled;
+}
+
 public void ToggleLagCompSettings(int client)
 {
 	if(!client || !IsClientInGame(client) || IsFakeClient(client))
@@ -1415,6 +1459,19 @@ public void ToggleLagCompSettings(int client)
 	SetClientCookie(client, g_hCookie_DisableLagComp, g_bDisableLagComp[client] ? "1" : "");
 
 	CPrintToChat(client, "%s LagCompensation has been %s.", PREFIX, g_bDisableLagComp[client] ? "disabled" : "enabled");
+}
+
+public void ToggleLagCompLasers(int client)
+{
+	if(!client || !IsClientInGame(client) || IsFakeClient(client))
+		return;
+
+	g_bPlayerLaserCompensated[client] = !g_bPlayerLaserCompensated[client];
+	SetClientCookie(client, g_hCookie_LagCompLasers, g_bPlayerLaserCompensated[client] ? "1" : "");
+
+	CPrintToChat(client, "%s LagCompensation for Lasers has been %s.", PREFIX, g_bPlayerLaserCompensated[client] ? "enabled" : "disabled");
+	if (g_bCheckPing && g_bPlayerLaserCompensated[client])
+		CPrintToChat(client, "%s It will take effect if your real ping is higher than %dms.", PREFIX, g_iMinPing);
 }
 
 public void ToggleLagCompMessages(int client)
@@ -1466,12 +1523,14 @@ public void ShowSettingsMenu(int client)
 	menu.SetTitle("LagCompensation Settings", client);
 	menu.ExitBackButton = true;
 
-	char buffer[128], msg_buffer[128];
+	char buffer[128], buffer_lasers[128], msg_buffer[128];
 	Format(buffer, sizeof(buffer), "LagCompensation: %s", g_bDisableLagComp[client] ? "Disabled" : "Enabled");
+	Format(buffer_lasers, sizeof(buffer_lasers), "LagCompensation for Lasers: %s", g_bPlayerLaserCompensated[client] ? "Enabled" : "Disabled");
 	Format(msg_buffer, sizeof(msg_buffer), "LagCompensation Messages: %s", g_bLagCompMessages[client] ? "Enabled" : "Disabled");
 
 	menu.AddItem("0", buffer);
-	menu.AddItem("1", msg_buffer);
+	menu.AddItem("1", buffer_lasers);
+	menu.AddItem("2", msg_buffer, CheckCommandAccess(client, "sm_lagged", ADMFLAG_ROOT) ? ITEMDRAW_DEFAULT : ITEMDRAW_DISABLED);
 
 	menu.Display(client, MENU_TIME_FOREVER);
 }
@@ -1500,7 +1559,8 @@ public int MenuHandler_MainMenu(Menu menu, MenuAction action, int client, int se
 			switch(selection)
 			{
 				case(0): ToggleLagCompSettings(client);
-				case(1): ToggleLagCompMessages(client);
+				case(1): ToggleLagCompLasers(client);
+				case(2): ToggleLagCompMessages(client);
 			}
 
 			ShowSettingsMenu(client);
