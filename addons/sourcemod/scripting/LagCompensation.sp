@@ -495,21 +495,8 @@ public void OnClientConnected(int client)
 
 public void OnClientCookiesCached(int client)
 {
-	char sBuffer[16];
-
 	// Load all settings from single cookie
-	GetClientCookie(client, g_hCookie_LagCompSettings, sBuffer, sizeof(sBuffer));
-	if (sBuffer[0] == '\0')
-	{
-		// Set default values (no need to save since they're default)
-		g_bDisableLagComp[client] = false;
-		g_bPlayerLaserCompensated[client] = true;
-		g_bLagCompMessages[client] = false;
-	}
-	else
-	{
-		LoadLagCompSettings(client, sBuffer);
-	}
+	ParseClientCookie(client, g_bDisableLagComp[client], g_bPlayerLaserCompensated[client], g_bLagCompMessages[client]);
 }
 
 public void OnClientSettingsChanged(int client)
@@ -1273,16 +1260,46 @@ bool CompareVectors(const float vec1[3], const float vec2[3])
 
 void SaveLagCompSettings(int client)
 {
-	// Check if all values are default (no need to save)
-	if (!g_bDisableLagComp[client] && g_bPlayerLaserCompensated[client] && !g_bLagCompMessages[client])
-		return;
+	// Read current cookie values
+	bool currentDisableLagComp, currentPlayerLaserCompensated, currentLagCompMessages;
+	ParseClientCookie(client, currentDisableLagComp, currentPlayerLaserCompensated, currentLagCompMessages);
 
+	// Check if values have changed
+	bool disableChanged = g_bDisableLagComp[client] != currentDisableLagComp;
+	bool laserChanged = g_bPlayerLaserCompensated[client] != currentPlayerLaserCompensated;
+	bool messagesChanged = g_bLagCompMessages[client] != currentLagCompMessages;
+
+	// If no values have changed, no need to save
+	if (!disableChanged && !laserChanged && !messagesChanged) {
+		return;
+	}
+
+	// Otherwise, save the chain format
 	char sBuffer[8];
 	Format(sBuffer, sizeof(sBuffer), "%d%d%d", 
 		g_bDisableLagComp[client] ? 1 : 0,
 		g_bPlayerLaserCompensated[client] ? 1 : 0,
 		g_bLagCompMessages[client] ? 1 : 0);
 	SetClientCookie(client, g_hCookie_LagCompSettings, sBuffer);
+}
+
+void ParseClientCookie(int client, bool &disableLagComp, bool &playerLaserCompensated, bool &lagCompMessages)
+{
+	char buffer[16];
+	GetClientCookie(client, g_hCookie_LagCompSettings, buffer, sizeof(buffer));
+
+	// Parse chain format: disable|laser|messages
+	if (buffer[0] != '\0' && strlen(buffer) >= 3) {
+		disableLagComp = (buffer[0] == '1');
+		playerLaserCompensated = (buffer[1] == '1');
+		lagCompMessages = (buffer[2] == '1');
+	}
+	else {
+		// Default values
+		disableLagComp = false;
+		playerLaserCompensated = true;
+		lagCompMessages = false;
+	}
 }
 
 void LoadLagCompSettings(int client, const char[] sBuffer)
