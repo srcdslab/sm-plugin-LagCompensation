@@ -18,7 +18,7 @@ public Plugin myinfo =
 	name 			= "LagCompensation",
 	author 			= "BotoX, Vauff, .Rushaway, maxime1907",
 	description 	= "",
-	version 		= "1.0.8",
+	version 		= "1.1.0",
 	url 			= ""
 };
 
@@ -160,9 +160,7 @@ int g_aaFilterClientSolidTouch[((MAXPLAYERS + 1) * MAX_EDICTS) / 32];
 int g_aBlockTriggerMoved[MAX_EDICTS / 32];
 int g_aBlacklisted[MAX_EDICTS / 32];
 
-Handle g_hCookie_DisableLagComp;
-Handle g_hCookie_LagCompLasers;
-Handle g_hCookie_LagCompMessages;
+Handle g_hCookie_LagCompSettings;
 bool g_bDisableLagComp[MAXPLAYERS + 1];
 bool g_bPlayerLaserCompensated[MAXPLAYERS + 1];
 bool g_bLagCompMessages[MAXPLAYERS + 1];
@@ -350,9 +348,7 @@ public void OnPluginStart()
 	HookConVarChange(g_cvMinimumPing, OnConVarChanged);
 
 
-	g_hCookie_DisableLagComp = RegClientCookie("disable_lagcomp", "Client LagComp Status", CookieAccess_Private);
-	g_hCookie_LagCompLasers = RegClientCookie("lagcomp_lasers", "LagCompensation Lasers", CookieAccess_Private);
-	g_hCookie_LagCompMessages = RegClientCookie("lagcomp_messages", "Print LagComp messages in chat", CookieAccess_Private);
+	g_hCookie_LagCompSettings = RegClientCookie("lagcomp_settings", "LagCompensation Settings", CookieAccess_Private);
 	RegConsoleCmd("sm_lagcomp", OnToggleLagCompSettings);
 	RegConsoleCmd("sm_0ping", OnToggleLagCompSettings);
 	RegConsoleCmd("sm_0pinglasers", OnToggleLagCompLasersSettings);
@@ -403,6 +399,8 @@ public void OnPluginEnd()
 			RemoveEdict(g_aEntityLagData[i].iEntity);
 		}
 	}
+
+	delete g_hCookie_LagCompSettings;
 }
 
 public void OnConfigsExecuted()
@@ -499,37 +497,8 @@ public void OnClientConnected(int client)
 
 public void OnClientCookiesCached(int client)
 {
-	char sBuffer[16];
-
-	// Enable lagcomp by default
-	GetClientCookie(client, g_hCookie_DisableLagComp, sBuffer, sizeof(sBuffer));
-	if (sBuffer[0] == '\0')
-	{
-		g_bDisableLagComp[client] = false;
-		SetClientCookie(client, g_hCookie_DisableLagComp, "0");
-	}
-	else
-		g_bDisableLagComp[client] = StringToInt(sBuffer) != 0;
-
-	// Enable laser compensation by default
-	GetClientCookie(client, g_hCookie_LagCompLasers, sBuffer, sizeof(sBuffer));
-	if (sBuffer[0] == '\0')
-	{
-		g_bPlayerLaserCompensated[client] = true;
-		SetClientCookie(client, g_hCookie_LagCompLasers, "1");
-	}
-	else
-		g_bPlayerLaserCompensated[client] = StringToInt(sBuffer) != 0;
-
-	// Disable lagcomp messages by default
-	GetClientCookie(client, g_hCookie_LagCompMessages, sBuffer, sizeof(sBuffer));
-	if (sBuffer[0] == '\0')
-	{
-		g_bLagCompMessages[client] = false;
-		SetClientCookie(client, g_hCookie_LagCompMessages, "0");
-	}
-	else
-		g_bLagCompMessages[client] = StringToInt(sBuffer) != 0;
+	// Load all settings from single cookie
+	ParseClientCookie(client, g_bDisableLagComp[client], g_bPlayerLaserCompensated[client], g_bLagCompMessages[client]);
 }
 
 public void OnClientSettingsChanged(int client)
@@ -1291,6 +1260,51 @@ bool CompareVectors(const float vec1[3], const float vec2[3])
 	return vec1[0] == vec2[0] && vec1[1] == vec2[1] && vec1[2] == vec2[2];
 }
 
+void SaveLagCompSettings(int client)
+{
+	// Read current cookie values
+	bool currentDisableLagComp, currentPlayerLaserCompensated, currentLagCompMessages;
+	ParseClientCookie(client, currentDisableLagComp, currentPlayerLaserCompensated, currentLagCompMessages);
+
+	// Check if values have changed
+	bool disableChanged = g_bDisableLagComp[client] != currentDisableLagComp;
+	bool laserChanged = g_bPlayerLaserCompensated[client] != currentPlayerLaserCompensated;
+	bool messagesChanged = g_bLagCompMessages[client] != currentLagCompMessages;
+
+	// If no values have changed, no need to save
+	if (!disableChanged && !laserChanged && !messagesChanged) {
+		return;
+	}
+
+	// Otherwise, save the chain format
+	char sBuffer[8];
+	Format(sBuffer, sizeof(sBuffer), "%d%d%d", 
+		g_bDisableLagComp[client] ? 1 : 0,
+		g_bPlayerLaserCompensated[client] ? 1 : 0,
+		g_bLagCompMessages[client] ? 1 : 0);
+	SetClientCookie(client, g_hCookie_LagCompSettings, sBuffer);
+}
+
+void ParseClientCookie(int client, bool &disableLagComp, bool &playerLaserCompensated, bool &lagCompMessages)
+{
+	char buffer[16];
+	GetClientCookie(client, g_hCookie_LagCompSettings, buffer, sizeof(buffer));
+
+	// Parse chain format: disable|laser|messages
+	if (strlen(buffer) >= 3)
+	{
+		disableLagComp = (buffer[0] == '1');
+		playerLaserCompensated = (buffer[1] == '1');
+		lagCompMessages = (buffer[2] == '1');
+	}
+	else
+	{
+		// Default values
+		disableLagComp = false;
+		playerLaserCompensated = true;
+		lagCompMessages = false;
+	}
+}
 
 public Action Command_AddLagCompensation(int client, int argc)
 {
@@ -1456,7 +1470,7 @@ public void ToggleLagCompSettings(int client)
 		return;
 
 	g_bDisableLagComp[client] = !g_bDisableLagComp[client];
-	SetClientCookie(client, g_hCookie_DisableLagComp, g_bDisableLagComp[client] ? "1" : "");
+	SaveLagCompSettings(client);
 
 	CPrintToChat(client, "%s LagCompensation has been %s.", PREFIX, g_bDisableLagComp[client] ? "disabled" : "enabled");
 }
@@ -1467,7 +1481,7 @@ public void ToggleLagCompLasers(int client)
 		return;
 
 	g_bPlayerLaserCompensated[client] = !g_bPlayerLaserCompensated[client];
-	SetClientCookie(client, g_hCookie_LagCompLasers, g_bPlayerLaserCompensated[client] ? "1" : "");
+	SaveLagCompSettings(client);
 
 	CPrintToChat(client, "%s LagCompensation for Lasers has been %s.", PREFIX, g_bPlayerLaserCompensated[client] ? "enabled" : "disabled");
 	if (g_bCheckPing && g_bPlayerLaserCompensated[client])
@@ -1480,7 +1494,7 @@ public void ToggleLagCompMessages(int client)
 		return;
 
 	g_bLagCompMessages[client] = !g_bLagCompMessages[client];
-	SetClientCookie(client, g_hCookie_LagCompMessages, g_bLagCompMessages[client] ? "1" : "");
+	SaveLagCompSettings(client);
 
 	CPrintToChat(client, "%s LagCompensation messages have been %s.", PREFIX, g_bLagCompMessages[client] ? "enabled" : "disabled");
 }
