@@ -399,6 +399,8 @@ public void OnPluginEnd()
 			RemoveEdict(g_aEntityLagData[i].iEntity);
 		}
 	}
+
+	delete g_hCookie_LagCompSettings;
 }
 
 public void OnConfigsExecuted()
@@ -1289,36 +1291,20 @@ void ParseClientCookie(int client, bool &disableLagComp, bool &playerLaserCompen
 	GetClientCookie(client, g_hCookie_LagCompSettings, buffer, sizeof(buffer));
 
 	// Parse chain format: disable|laser|messages
-	if (buffer[0] != '\0' && strlen(buffer) >= 3) {
+	if (strlen(buffer) >= 3)
+	{
 		disableLagComp = (buffer[0] == '1');
 		playerLaserCompensated = (buffer[1] == '1');
 		lagCompMessages = (buffer[2] == '1');
 	}
-	else {
+	else
+	{
 		// Default values
 		disableLagComp = false;
 		playerLaserCompensated = true;
 		lagCompMessages = false;
 	}
 }
-
-void LoadLagCompSettings(int client, const char[] sBuffer)
-{
-	if (strlen(sBuffer) >= 3)
-	{
-		g_bDisableLagComp[client] = (sBuffer[0] == '1');
-		g_bPlayerLaserCompensated[client] = (sBuffer[1] == '1');
-		g_bLagCompMessages[client] = (sBuffer[2] == '1');
-	}
-	else
-	{
-		// Default values if cookie is empty or invalid
-		g_bDisableLagComp[client] = false;
-		g_bPlayerLaserCompensated[client] = true;
-		g_bLagCompMessages[client] = false;
-	}
-}
-
 
 public Action Command_AddLagCompensation(int client, int argc)
 {
