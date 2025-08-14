@@ -18,7 +18,7 @@ public Plugin myinfo =
 	name 			= "LagCompensation",
 	author 			= "BotoX, Vauff, .Rushaway, maxime1907",
 	description 	= "",
-	version 		= "1.1.0",
+	version 		= "1.1.1",
 	url 			= ""
 };
 
@@ -489,6 +489,7 @@ public void OnMapEnd()
 
 public void OnClientConnected(int client)
 {
+	g_bLagCompMessages[client] = false;
 	g_bDisableLagComp[client] = false;
 	g_bPlayerLaserCompensated[client] = false;
 	g_iDisableLagComp[client] = 0;
@@ -930,7 +931,7 @@ public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3
 			continue;
 
 		// Verify if the client have compensated the lasers
-		if (!g_bPlayerLaserCompensated[client] || g_iCompenseEntityClass == 0 && strcmp(g_aEntityLagData[i].sClassname, "trigger_hurt", false) != 0 || strcmp(g_aEntityLagData[i].sClassname, "trigger_push", false) != 0 || strcmp(g_aEntityLagData[i].sClassname, "trigger_teleport", false) != 0)
+		if (!g_bPlayerLaserCompensated[client] || (g_iCompenseEntityClass == 0 && strcmp(g_aEntityLagData[i].sClassname, "trigger_hurt", false) != 0 && strcmp(g_aEntityLagData[i].sClassname, "trigger_push", false) != 0 && strcmp(g_aEntityLagData[i].sClassname, "trigger_teleport", false) != 0))
 			continue;
 
 		int iRecord = iDelta;
@@ -1429,7 +1430,7 @@ public Action DisableLagCompTimer(Handle timer)
 			if (iAvgPing > g_iMinPing)
 			{
 				g_iDisableLagComp[client]++;
-				return Plugin_Continue;
+				continue;
 			}
 		}
 
