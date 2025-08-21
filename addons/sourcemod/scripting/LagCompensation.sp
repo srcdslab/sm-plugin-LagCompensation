@@ -18,7 +18,7 @@ public Plugin myinfo =
 	name 			= "LagCompensation",
 	author 			= "BotoX, Vauff, .Rushaway, maxime1907",
 	description 	= "",
-	version 		= "1.1.0",
+	version 		= "1.1.1",
 	url 			= ""
 };
 
@@ -27,6 +27,9 @@ bool g_bHasPhysHooks = true;
 bool g_bHasOnEntitySpawned = false;
 bool g_bCheckPing = false;
 int g_iCompenseEntityClass;
+
+// StringMap for fast entity classname lookups
+StringMap g_hEntityClassMap;
 
 // Don't change this.
 #define MAX_EDICTS 2048
@@ -340,6 +343,16 @@ public void OnPluginStart()
 
 	delete hGameData;
 
+	// Initialize and populate the entity classname StringMap for fast lookups
+	if (g_hEntityClassMap != null)
+		delete g_hEntityClassMap;
+	
+	g_hEntityClassMap = new StringMap();
+	g_hEntityClassMap.SetValue("func_physbox", true);
+	g_hEntityClassMap.SetValue("trigger_hurt", true);
+	g_hEntityClassMap.SetValue("trigger_push", true);
+	g_hEntityClassMap.SetValue("trigger_teleport", true);
+
 	// Capability provider from https://github.com/alliedmodders/sourcemod/pull/1078
 	g_bHasOnEntitySpawned = GetFeatureStatus(FeatureType_Capability, "SDKHook_OnEntitySpawned") == FeatureStatus_Available;
 
@@ -401,6 +414,9 @@ public void OnPluginEnd()
 	}
 
 	delete g_hCookie_LagCompSettings;
+
+	if (g_hEntityClassMap != null)
+		delete g_hEntityClassMap;
 }
 
 public void OnConfigsExecuted()
@@ -485,10 +501,17 @@ public void OnMapEnd()
 {
 	Detour_OnRestartRound();
 	g_bCleaningUp = true;
+	
+	// Clean up the StringMap
+	if (g_hEntityClassMap != null)
+		delete g_hEntityClassMap;
+
+	g_hEntityClassMap = new StringMap();
 }
 
 public void OnClientConnected(int client)
 {
+	g_bLagCompMessages[client] = false;
 	g_bDisableLagComp[client] = false;
 	g_bPlayerLaserCompensated[client] = false;
 	g_iDisableLagComp[client] = 0;
@@ -900,6 +923,7 @@ public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3
 	if(iDelta > MAX_RECORDS)
 		iDelta = MAX_RECORDS;
 
+	bool dummy;
 	int iPlayerSimTick = g_iGameTick - iDelta;
 
 	for(int i = 0; i < g_iNumEntities; i++)
@@ -930,8 +954,21 @@ public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3
 			continue;
 
 		// Verify if the client have compensated the lasers
-		if (!g_bPlayerLaserCompensated[client] || g_iCompenseEntityClass == 0 && strcmp(g_aEntityLagData[i].sClassname, "trigger_hurt", false) != 0 || strcmp(g_aEntityLagData[i].sClassname, "trigger_push", false) != 0 || strcmp(g_aEntityLagData[i].sClassname, "trigger_teleport", false) != 0)
+		if (!g_bPlayerLaserCompensated[client])
 			continue;
+
+		if (g_iCompenseEntityClass == 0)
+		{
+			// Mode 0: compensate all (func_physbox + triggers)
+			if (!g_hEntityClassMap.GetValue(g_aEntityLagData[i].sClassname, dummy))
+				continue;
+		}
+		else
+		{
+			// Mode != 0: compensate func_physbox only
+			if (strcmp(g_aEntityLagData[i].sClassname, "func_physbox", false) != 0)
+				continue;
+		}
 
 		int iRecord = iDelta;
 		if(iRecord >= g_aEntityLagData[i].iNumRecords)
@@ -1429,7 +1466,7 @@ public Action DisableLagCompTimer(Handle timer)
 			if (iAvgPing > g_iMinPing)
 			{
 				g_iDisableLagComp[client]++;
-				return Plugin_Continue;
+				continue;
 			}
 		}
 
