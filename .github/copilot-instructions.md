@@ -5,8 +5,8 @@ This repository contains a **LagCompensation** SourceMod plugin that provides la
 
 ## Technical Environment
 - **Language**: SourcePawn (SourceMod scripting language)
-- **Platform**: SourceMod 1.11+ (as specified in sourceknight.yaml)
-- **Build Tool**: SourceKnight (Python-based SourceMod build system)
+- **Platform**: SourceMod 1.12+
+- **Build Tool**: Native GitHub Actions (spcomp via rumblefrog/setup-sp)
 - **CI/CD**: GitHub Actions with automated building, testing, and releases
 - **Target Games**: Counter-Strike: Global Offensive (CS:GO) and Counter-Strike: Source (CS:S)
 
@@ -19,7 +19,6 @@ This repository contains a **LagCompensation** SourceMod plugin that provides la
 │   │   └── LagCompensation.sp        # Main plugin source code (~1600 lines)
 │   └── gamedata/
 │       └── LagCompensation.games.txt # Game signatures and offsets for CS:GO/CS:S
-├── sourceknight.yaml                 # Build configuration and dependencies
 ├── .gitignore                        # Git ignore patterns (excludes .smx, build/, etc.)
 └── .github/copilot-instructions.md   # This file
 ```
@@ -63,15 +62,15 @@ The plugin requires several SourceMod extensions and includes:
 
 ## Build System
 
-### SourceKnight Configuration
-The build system uses SourceKnight with configuration in `sourceknight.yaml`:
-- **Dependencies**: Automatically downloads SourceMod, MultiColors, and PhysHooks
+### GitHub Actions Configuration
+The build system uses native GitHub Actions with configuration in `.github/workflows/ci.yml`:
+- **Dependencies**: Clones SourceMod (via rumblefrog/setup-sp), MultiColors, and PhysHooks include files
 - **Build target**: `LagCompensation.sp` → `LagCompensation.smx`
-- **Output directory**: `/addons/sourcemod/plugins`
+- **Output directory**: `addons/sourcemod/plugins`
 
 ### Build Commands
-- **Local build**: `sourceknight build` (requires Python and SourceKnight package)
-- **CI build**: Automated via GitHub Actions using `maxime1907/action-sourceknight@v1`
+- **Local build**: `spcomp -i include -o ../plugins/LagCompensation.smx LagCompensation.sp` (run from `addons/sourcemod/scripting`)
+- **CI build**: Automated via GitHub Actions using `rumblefrog/setup-sp`
 
 ### Build Verification
 Always verify builds by checking:
