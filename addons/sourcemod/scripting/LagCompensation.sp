@@ -625,6 +625,9 @@ void BlacklistChildren(int parent)
 
 bool CheckEntityForLagComp(int entity, const char[] classname, bool bRecursive=false, bool bGoodParents=false)
 {
+	if(g_bCleaningUp)
+		return false;
+
 	if(entity < 0 || entity > MAX_EDICTS)
 		return false;
 
