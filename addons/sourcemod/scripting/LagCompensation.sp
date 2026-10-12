@@ -1101,6 +1101,9 @@ bool AddEntityForLagCompensation(int iEntity, bool bLateKill)
 	if (g_bCleaningUp)
 		return false;
 
+	if (iEntity <= 0 || iEntity >= MAX_EDICTS || !IsValidEntity(iEntity))
+		return false;
+
 	if (g_aLagCompensated[iEntity] != -1)
 		return false;
 
