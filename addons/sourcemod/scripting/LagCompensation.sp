@@ -662,7 +662,7 @@ bool CheckEntityForLagComp(int entity, const char[] classname, bool bRecursive=f
 		if ((iParent >= 1 && iParent <= MaxClients) || !strncmp(sParentClassname, "weapon_", 7))
 			return false;
 
-		if (CheckBit(g_aBlacklisted, entity))
+		if (CheckBit(g_aBlacklisted, iParent))
 			return false;
 
 		if (g_aLagCompensated[iParent] != -1)
