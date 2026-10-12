@@ -1406,7 +1406,7 @@ public Action DisableLagCompTimer(Handle timer)
 			if (iAvgPing > g_iMinPing)
 			{
 				g_iDisableLagComp[client]++;
-				return Plugin_Continue;
+				continue;
 			}
 		}
 
