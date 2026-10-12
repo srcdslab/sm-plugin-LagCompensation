@@ -620,7 +620,7 @@ bool CheckEntityForLagComp(int entity, const char[] classname, bool bRecursive=f
 	if (g_bCleaningUp)
 		return false;
 
-	if (entity < 0 || entity > MAX_EDICTS)
+	if (entity < 0 || entity >= MAX_EDICTS)
 		return false;
 
 	if (!IsValidEntity(entity))
@@ -726,7 +726,7 @@ public void OnEntityDestroyed(int entity)
 	if (g_bCleaningUp)
 		return;
 
-	if (entity < 0 || entity > MAX_EDICTS)
+	if (entity < 0 || entity >= MAX_EDICTS)
 		return;
 
 	ClearBit(g_aBlacklisted, entity);
@@ -748,7 +748,7 @@ public MRESReturn Detour_OnUTIL_Remove(Handle hParams)
 		return MRES_Ignored;
 
 	int entity = DHookGetParamObjectPtrVar(hParams, 1, g_iNetworkableOuter, ObjectValueType_CBaseEntityPtr);
-	if (entity < 0 || entity > MAX_EDICTS)
+	if (entity < 0 || entity >= MAX_EDICTS)
 		return MRES_Ignored;
 
 	int iIndex = g_aLagCompensated[entity];
