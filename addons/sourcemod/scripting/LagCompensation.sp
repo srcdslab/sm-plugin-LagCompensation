@@ -122,16 +122,16 @@ Handle g_hCalcAbsolutePosition;
 Handle g_hMarkPartitionHandleDirty;
 
 // DHooks Detour
-Handle g_hUTIL_Remove;
-Handle g_hRestartRound;
-Handle g_hSetTarget;
-Handle g_hSetTargetPost;
-Handle g_hFrameUpdatePostEntityThink;
+DynamicDetour g_hUTIL_Remove;
+DynamicDetour g_hRestartRound;
+DynamicDetour g_hSetTarget;
+DynamicDetour g_hSetTargetPost;
+DynamicDetour g_hFrameUpdatePostEntityThink;
 
 // DHooks Virtual
-Handle g_hActivate;
-Handle g_hAcceptInput;
-Handle g_hEndGameFrame;
+DynamicHook g_hActivate;
+DynamicHook g_hAcceptInput;
+DynamicHook g_hEndGameFrame;
 
 #define PREFIX "{green}[LagCompensation]{default}"
 
@@ -179,7 +179,7 @@ public void OnPluginStart()
 
 	AutoExecConfig(true);
 
-	Handle hGameData = LoadGameConfigFile("LagCompensation.games");
+	GameData hGameData = new GameData("LagCompensation.games");
 	if (!hGameData)
 		SetFailState("Failed to load LagCompensation gamedata.");
 
@@ -201,87 +201,84 @@ public void OnPluginStart()
 	}
 	g_hMarkPartitionHandleDirty = EndPrepSDKCall();
 
-
 	// ::UTIL_Remove
-	g_hUTIL_Remove = DHookCreateFromConf(hGameData, "UTIL_Remove");
+	g_hUTIL_Remove = DynamicDetour.FromConf(hGameData, "UTIL_Remove");
 	if (!g_hUTIL_Remove)
 	{
 		delete hGameData;
 		SetFailState("Failed to setup detour for UTIL_Remove");
 	}
 
-	if (!DHookEnableDetour(g_hUTIL_Remove, false, Detour_OnUTIL_Remove))
+	if (!g_hUTIL_Remove.Enable(Hook_Pre, Detour_OnUTIL_Remove))
 	{
 		delete hGameData;
 		SetFailState("Failed to detour UTIL_Remove.");
 	}
 
 	// CCSGameRules::RestartRound
-	g_hRestartRound = DHookCreateFromConf(hGameData, "CCSGameRules__RestartRound");
+	g_hRestartRound = DynamicDetour.FromConf(hGameData, "CCSGameRules__RestartRound");
 	if (!g_hRestartRound)
 	{
 		delete hGameData;
 		SetFailState("Failed to setup detour for CCSGameRules__RestartRound");
 	}
 
-	if (!DHookEnableDetour(g_hRestartRound, false, Detour_OnRestartRound))
+	if (!g_hRestartRound.Enable(Hook_Pre, Detour_OnRestartRound))
 	{
 		delete hGameData;
 		SetFailState("Failed to detour CCSGameRules__RestartRound.");
 	}
 
 	// CLogicMeasureMovement::SetTarget
-	g_hSetTarget = DHookCreateFromConf(hGameData, "CLogicMeasureMovement__SetTarget");
+	g_hSetTarget = DynamicDetour.FromConf(hGameData, "CLogicMeasureMovement__SetTarget");
 	if (!g_hSetTarget)
 	{
 		delete hGameData;
 		SetFailState("Failed to setup detour for CLogicMeasureMovement__SetTarget");
 	}
 
-	if (!DHookEnableDetour(g_hSetTarget, false, Detour_OnSetTargetPre))
+	if (!g_hSetTarget.Enable(Hook_Pre, Detour_OnSetTargetPre))
 	{
 		delete hGameData;
 		SetFailState("Failed to detour CLogicMeasureMovement__SetTarget.");
 	}
 
 	// CLogicMeasureMovement::SetTarget (fix post hook crashing due to this pointer being overwritten)
-	g_hSetTargetPost = DHookCreateFromConf(hGameData, "CLogicMeasureMovement__SetTarget_post");
+	g_hSetTargetPost = DynamicDetour.FromConf(hGameData, "CLogicMeasureMovement__SetTarget_post");
 	if (!g_hSetTargetPost)
 	{
 		delete hGameData;
 		SetFailState("Failed to setup detour for CLogicMeasureMovement__SetTarget_post");
 	}
 
-	if (!DHookEnableDetour(g_hSetTargetPost, true, Detour_OnSetTargetPost))
+	if (!g_hSetTargetPost.Enable(Hook_Post, Detour_OnSetTargetPost))
 	{
 		delete hGameData;
 		SetFailState("Failed to detour CLogicMeasureMovement__SetTarget_post.");
 	}
 
 	// CEntityTouchManager::FrameUpdatePostEntityThink
-	g_hFrameUpdatePostEntityThink = DHookCreateFromConf(hGameData, "CEntityTouchManager__FrameUpdatePostEntityThink");
+	g_hFrameUpdatePostEntityThink = DynamicDetour.FromConf(hGameData, "CEntityTouchManager__FrameUpdatePostEntityThink");
 	if (!g_hFrameUpdatePostEntityThink)
 	{
 		delete hGameData;
 		SetFailState("Failed to setup detour for CEntityTouchManager__FrameUpdatePostEntityThink");
 	}
 
-	if (!DHookEnableDetour(g_hFrameUpdatePostEntityThink, false, Detour_OnFrameUpdatePostEntityThink))
+	if (!g_hFrameUpdatePostEntityThink.Enable(Hook_Pre, Detour_OnFrameUpdatePostEntityThink))
 	{
 		delete hGameData;
 		SetFailState("Failed to detour CEntityTouchManager__FrameUpdatePostEntityThink.");
 	}
 
-
-	g_iNetworkableOuter = GameConfGetOffset(hGameData, "CServerNetworkableProperty::m_pOuter");
+	g_iNetworkableOuter = hGameData.GetOffset("CServerNetworkableProperty::m_pOuter");
 	if (g_iNetworkableOuter == -1)
 	{
 		delete hGameData;
-		SetFailState("GameConfGetOffset(hGameData, \"CServerNetworkableProperty::m_pOuter\") failed!");
+		SetFailState("hGameData.GetOffset(\"CServerNetworkableProperty::m_pOuter\") failed!");
 	}
 
-
-	int offset = GameConfGetOffset(hGameData, "CGameRules::EndGameFrame");
+	int offset = hGameData.GetOffset("CGameRules::EndGameFrame");
 	if (offset == -1)
 	{
 		delete hGameData;
@@ -289,20 +286,19 @@ public void OnPluginStart()
 	}
 
 	// CGameRules::EndGameFrame
-	g_hEndGameFrame = DHookCreate(offset, HookType_GameRules, ReturnType_Void, ThisPointer_Ignore, Hook_EndGameFrame);
-	if (g_hEndGameFrame == INVALID_HANDLE)
+	g_hEndGameFrame = new DynamicHook(offset, HookType_GameRules, ReturnType_Void, ThisPointer_Ignore);
+	if (!g_hEndGameFrame)
 	{
 		delete hGameData;
 		SetFailState("Failed to DHook CGameRules::EndGameFrame.");
 	}
 	delete hGameData;
 
-
-	hGameData = LoadGameConfigFile("sdktools.games");
+	hGameData = new GameData("sdktools.games");
 	if (!hGameData)
 		SetFailState("Failed to load sdktools gamedata.");
 
-	offset = GameConfGetOffset(hGameData, "Activate");
+	offset = hGameData.GetOffset("Activate");
 	if (offset == -1)
 	{
 		delete hGameData;
@@ -310,14 +306,14 @@ public void OnPluginStart()
 	}
 
 	// CPhysForce::Activate
-	g_hActivate = DHookCreate(offset, HookType_Entity, ReturnType_Void, ThisPointer_CBaseEntity, Hook_CPhysForce_Activate);
-	if (g_hActivate == INVALID_HANDLE)
+	g_hActivate = new DynamicHook(offset, HookType_Entity, ReturnType_Void, ThisPointer_CBaseEntity);
+	if (!g_hActivate)
 	{
 		delete hGameData;
 		SetFailState("Failed to DHookCreate Activate");
 	}
 
-	offset = GameConfGetOffset(hGameData, "AcceptInput");
+	offset = hGameData.GetOffset("AcceptInput");
 	if (offset == -1)
 	{
 		delete hGameData;
@@ -325,18 +321,18 @@ public void OnPluginStart()
 	}
 
 	// CBaseEntity::AcceptInput( const char *szInputName, CBaseEntity *pActivator, CBaseEntity *pCaller, variant_t Value, int outputID )
-	g_hAcceptInput = DHookCreate(offset, HookType_Entity, ReturnType_Bool, ThisPointer_CBaseEntity, Hook_AcceptInput);
-	if (g_hAcceptInput == INVALID_HANDLE)
+	g_hAcceptInput = new DynamicHook(offset, HookType_Entity, ReturnType_Bool, ThisPointer_CBaseEntity);
+	if (!g_hAcceptInput)
 	{
 		delete hGameData;
 		SetFailState("Failed to DHook AcceptInput.");
 	}
 
-	DHookAddParam(g_hAcceptInput, HookParamType_CharPtr);
-	DHookAddParam(g_hAcceptInput, HookParamType_CBaseEntity);
-	DHookAddParam(g_hAcceptInput, HookParamType_CBaseEntity);
-	DHookAddParam(g_hAcceptInput, HookParamType_Object, 20, DHookPass_ByVal|DHookPass_ODTOR|DHookPass_OCTOR|DHookPass_OASSIGNOP); // variant_t is a union of 12 (float[3]) plus two int type params 12 + 8 = 20
-	DHookAddParam(g_hAcceptInput, HookParamType_Int);
+	g_hAcceptInput.AddParam(HookParamType_CharPtr);
+	g_hAcceptInput.AddParam(HookParamType_CBaseEntity);
+	g_hAcceptInput.AddParam(HookParamType_CBaseEntity);
+	g_hAcceptInput.AddParam(HookParamType_Object, 20, DHookPass_ByVal|DHookPass_ODTOR|DHookPass_OCTOR|DHookPass_OASSIGNOP); // variant_t is a union of 12 (float[3]) plus two int type params 12 + 8 = 20
+	g_hAcceptInput.AddParam(HookParamType_Int);
 
 	delete hGameData;
 
@@ -346,7 +342,6 @@ public void OnPluginStart()
 	HookConVarChange(g_cvCompenseEntityClass, OnConVarChanged);
 	HookConVarChange(g_cvCheckUserPing, OnConVarChanged);
 	HookConVarChange(g_cvMinimumPing, OnConVarChanged);
-
 
 	g_hCookie_LagCompSettings = RegClientCookie("lagcomp_settings", "LagCompensation Settings", CookieAccess_Private);
 	RegConsoleCmd("sm_lagcomp", OnToggleLagCompSettings);
@@ -387,7 +382,7 @@ public void OnPluginEnd()
 		BlockTriggerTouchPlayers(g_aBlockTriggerTouchPlayers, false);
 	}
 
-	DHookDisableDetour(g_hUTIL_Remove, false, Detour_OnUTIL_Remove);
+	g_hUTIL_Remove.Disable(Hook_Pre, Detour_OnUTIL_Remove);
 
 	for (int i = 0; i < g_iNumEntities; i++)
 	{
@@ -422,7 +417,7 @@ public void OnMapStart()
 {
 	bool bLate = g_bLateLoad;
 
-	DHookGamerules(g_hEndGameFrame, true);
+	g_hEndGameFrame.HookGamerules(Hook_Post, Hook_EndGameFrame);
 
 	g_bCleaningUp = false;
 
@@ -519,9 +514,9 @@ public void OnEntityCreated(int entity, const char[] classname)
 		return;
 
 	if (strcmp(classname, "phys_thruster", false) == 0)
-		DHookEntity(g_hActivate, true, entity);
+		g_hActivate.HookEntity(Hook_Post, entity, Hook_CPhysForce_Activate);
 	else if (strcmp(classname, "game_ui", false) == 0)
-		DHookEntity(g_hAcceptInput, true, entity);
+		g_hAcceptInput.HookEntity(Hook_Post, entity, Hook_AcceptInput);
 
 	if (!g_bHasOnEntitySpawned && (!strncmp(classname, "func_physbox", 12, false) || (g_iCompenseEntityClass == 0 && (strcmp(classname, "trigger_hurt", false) == 0 ||
 		strcmp(classname, "trigger_push", false) == 0 || strcmp(classname, "trigger_teleport", false) == 0))))
@@ -546,21 +541,21 @@ public void OnEntitySpawned(int entity, const char[] classname)
 	CheckEntityForLagComp(entity, classname);
 }
 
-public MRESReturn Hook_AcceptInput(int entity, Handle hReturn, Handle hParams)
+public MRESReturn Hook_AcceptInput(int entity, DHookReturn hReturn, DHookParam hParams)
 {
 	if (!IsValidEntity(entity))
 		return MRES_Ignored;
 
 	char sCommand[128];
-	DHookGetParamString(hParams, 1, sCommand, sizeof(sCommand));
+	hParams.GetString(1, sCommand, sizeof(sCommand));
 
 	if (strcmp(sCommand, "Activate", false) != 0)
 		return MRES_Ignored;
 
-	if (DHookIsNullParam(hParams, 3))
+	if (hParams.IsNull(3))
 		return MRES_Ignored;
 
-	int iCaller = DHookGetParam(hParams, 3);
+	int iCaller = hParams.Get(3);
 	if (iCaller <= 0 || iCaller >= MAX_EDICTS)
 		return MRES_Ignored;
 
@@ -742,15 +737,15 @@ public void OnEntityDestroyed(int entity)
 }
 
 
-public MRESReturn Detour_OnUTIL_Remove(Handle hParams)
+public MRESReturn Detour_OnUTIL_Remove(DHookParam hParams)
 {
 	if (g_bCleaningUp)
 		return MRES_Ignored;
 
-	if (DHookIsNullParam(hParams, 1))
+	if (hParams.IsNull(1))
 		return MRES_Ignored;
 
-	int entity = DHookGetParamObjectPtrVar(hParams, 1, g_iNetworkableOuter, ObjectValueType_CBaseEntityPtr);
+	int entity = hParams.GetObjectVar(1, g_iNetworkableOuter, ObjectValueType_CBaseEntityPtr);
 	if (entity < 0 || entity >= MAX_EDICTS)
 		return MRES_Ignored;
 
@@ -809,12 +804,12 @@ public MRESReturn Detour_OnRestartRound()
 
 // https://developer.valvesoftware.com/wiki/Logic_measure_movement
 int g_OnSetTarget_pThis;
-public MRESReturn Detour_OnSetTargetPre(int pThis, Handle hParams)
+public MRESReturn Detour_OnSetTargetPre(int pThis, DHookParam hParams)
 {
 	g_OnSetTarget_pThis = pThis;
 	return MRES_Ignored;
 }
-public MRESReturn Detour_OnSetTargetPost(Handle hParams)
+public MRESReturn Detour_OnSetTargetPost(DHookParam hParams)
 {
 	int entity = GetEntPropEnt(g_OnSetTarget_pThis, Prop_Data, "m_hTarget");
 	if (!IsValidEntity(entity))
