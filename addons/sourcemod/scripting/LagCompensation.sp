@@ -1321,7 +1321,10 @@ public Action Command_AddLagCompensation(int client, int argc)
 		late = view_as<bool>(StringToInt(sArgs));
 	}
 
-	AddEntityForLagCompensation(entity, late);
+	if (AddEntityForLagCompensation(entity, late))
+		ReplyToCommand(client, "[SM] Entity %d is now lag compensated.", entity);
+	else
+		ReplyToCommand(client, "[SM] Could not lag compensate invalid entity %d.", entity);
 
 	return Plugin_Handled;
 }
