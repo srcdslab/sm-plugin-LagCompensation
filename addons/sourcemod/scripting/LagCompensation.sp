@@ -892,7 +892,7 @@ public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3
 	int iPlayerSimTick = g_iGameTick - iDelta;
 
 	// Verify if the client have compensated the lasers
-	bool bSkipTriggers = !g_bPlayerLaserCompensated[client] && g_iCompenseEntityClass == 0;
+	bool bSkipTriggers = !g_bPlayerLaserCompensated[client];
 
 	for (int i = 0; i < g_iNumEntities; i++)
 	{
