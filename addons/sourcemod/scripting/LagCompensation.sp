@@ -1403,10 +1403,10 @@ public Action DisableLagCompTimer(Handle timer)
 		if (g_bCheckPing)
 		{
 			int iAvgPing = RoundFloat(GetClientAvgLatency(client, NetFlow_Outgoing) * 1000);
-
-			if (iAvgPing > g_iMinPing)
+			if (iAvgPing <= g_iMinPing)
 			{
-				g_iDisableLagComp[client]++;
+				if (g_iDisableLagComp[client] < MAX_RECORDS)
+					g_iDisableLagComp[client]++;
 				continue;
 			}
 		}
