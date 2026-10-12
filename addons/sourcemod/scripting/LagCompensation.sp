@@ -1213,6 +1213,7 @@ void EntityLagData_Copy(EntityLagData obj, const EntityLagData other)
 	obj.iNotMoving = other.iNotMoving;
 	obj.bRestore = other.bRestore;
 	obj.bLateKill = other.bLateKill;
+	strcopy(obj.sClassname, sizeof(obj.sClassname), other.sClassname);
 }
 
 void LagRecord_Copy(LagRecord obj, const LagRecord other)
