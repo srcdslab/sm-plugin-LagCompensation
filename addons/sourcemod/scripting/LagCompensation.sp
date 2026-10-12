@@ -104,7 +104,7 @@ enum struct EntityLagData
 	int iNotMoving;
 	bool bRestore;
 	bool bLateKill;
-	char sClassname[64];
+	bool bTrigger;
 }
 
 LagRecord g_aaLagRecords[MAX_ENTITIES][MAX_RECORDS];
@@ -888,6 +888,9 @@ public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3
 
 	int iPlayerSimTick = g_iGameTick - iDelta;
 
+	// Verify if the client have compensated the lasers
+	bool bSkipTriggers = !g_bPlayerLaserCompensated[client] && g_iCompenseEntityClass == 0;
+
 	for (int i = 0; i < g_iNumEntities; i++)
 	{
 		int iEntity = g_aEntityLagData[i].iEntity;
@@ -913,9 +916,7 @@ public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3
 		if (g_aEntityLagData[i].iNotMoving >= MAX_RECORDS)
 			continue;
 
-		// Verify if the client have compensated the lasers
-		if (!g_bPlayerLaserCompensated[client] && g_iCompenseEntityClass == 0 &&
-			(strcmp(g_aEntityLagData[i].sClassname, "trigger_hurt", false) == 0 || strcmp(g_aEntityLagData[i].sClassname, "trigger_push", false) == 0 || strcmp(g_aEntityLagData[i].sClassname, "trigger_teleport", false) == 0))
+		if (bSkipTriggers && g_aEntityLagData[i].bTrigger)
 			continue;
 
 		int iRecord = iDelta;
@@ -1132,7 +1133,7 @@ bool AddEntityForLagCompensation(int iEntity, bool bLateKill)
 	g_aEntityLagData[i].iNotMoving = MAX_RECORDS;
 	g_aEntityLagData[i].bRestore = false;
 	g_aEntityLagData[i].bLateKill = bLateKill;
-	g_aEntityLagData[i].sClassname = sClassname;
+	g_aEntityLagData[i].bTrigger = strcmp(sClassname, "trigger_hurt", false) == 0 || strcmp(sClassname, "trigger_push", false) == 0 || strcmp(sClassname, "trigger_teleport", false) == 0;
 
 	if (bLateKill)
 		SetBit(g_aBlockTriggerTouchPlayers, iEntity);
@@ -1213,7 +1214,7 @@ void EntityLagData_Copy(EntityLagData obj, const EntityLagData other)
 	obj.iNotMoving = other.iNotMoving;
 	obj.bRestore = other.bRestore;
 	obj.bLateKill = other.bLateKill;
-	strcopy(obj.sClassname, sizeof(obj.sClassname), other.sClassname);
+	obj.bTrigger = other.bTrigger;
 }
 
 void LagRecord_Copy(LagRecord obj, const LagRecord other)
