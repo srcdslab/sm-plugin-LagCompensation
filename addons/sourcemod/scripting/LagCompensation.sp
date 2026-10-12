@@ -917,7 +917,15 @@ public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3
 			continue;
 
 		if (bSkipTriggers && g_aEntityLagData[i].bTrigger)
+		{
+			// An earlier client's command may have rewound this trigger, put it back to its live state
+			if (g_aEntityLagData[i].bRestore)
+			{
+				RestoreEntityFromRecord(iEntity, g_aaLagRecords[i][g_aEntityLagData[i].iRecordIndex]);
+				g_aEntityLagData[i].bRestore = false;
+			}
 			continue;
+		}
 
 		int iRecord = iDelta;
 		if (iRecord >= g_aEntityLagData[i].iNumRecords)
