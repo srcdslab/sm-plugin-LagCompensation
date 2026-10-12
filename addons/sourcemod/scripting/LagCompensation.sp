@@ -656,6 +656,9 @@ bool CheckEntityForLagComp(int entity, const char[] classname, bool bRecursive=f
 		if (iTmp == INVALID_ENT_REFERENCE)
 			break;
 
+		if (iTmp >= MAX_EDICTS)
+			return false;
+
 		iParent = iTmp;
 		GetEntityClassname(iParent, sParentClassname, sizeof(sParentClassname));
 
