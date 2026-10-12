@@ -523,8 +523,8 @@ public void OnEntityCreated(int entity, const char[] classname)
 	else if (strcmp(classname, "game_ui", false) == 0)
 		DHookEntity(g_hAcceptInput, true, entity);
 
-	if (!g_bHasOnEntitySpawned && (!strncmp(classname, "func_physbox", 12, false) || (g_iCompenseEntityClass == 0 && strcmp(classname, "trigger_hurt", false) == 0 ||
-		strcmp(classname, "trigger_push", false) == 0 || strcmp(classname, "trigger_teleport", false) == 0)))
+	if (!g_bHasOnEntitySpawned && (!strncmp(classname, "func_physbox", 12, false) || (g_iCompenseEntityClass == 0 && (strcmp(classname, "trigger_hurt", false) == 0 ||
+		strcmp(classname, "trigger_push", false) == 0 || strcmp(classname, "trigger_teleport", false) == 0))))
 	{
 		SDKHook(entity, SDKHook_SpawnPost, OnSDKHookEntitySpawnPost);
 	}
