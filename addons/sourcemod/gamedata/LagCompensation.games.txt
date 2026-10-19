@@ -8,36 +8,42 @@
 			{
 				"library"		"server"
 				"linux"			"@_Z11UTIL_RemoveP18IServerNetworkable"
+				"linux64"			"@_Z11UTIL_RemoveP18IServerNetworkable"
 			}
 
 			"CCSGameRules::RestartRound"
 			{
 				"library"		"server"
 				"linux"			"@_ZN12CCSGameRules12RestartRoundEv"
+				"linux64"			"@_ZN12CCSGameRules12RestartRoundEv"
 			}
 
 			"CLogicMeasureMovement::SetTarget"
 			{
 				"library"		"server"
 				"linux"			"@_ZN21CLogicMeasureMovement9SetTargetEPKc"
+				"linux64"			"@_ZN21CLogicMeasureMovement9SetTargetEPKc"
 			}
 
 			"CEntityTouchManager::FrameUpdatePostEntityThink"
 			{
 				"library"		"server"
 				"linux"			"@_ZN19CEntityTouchManager26FrameUpdatePostEntityThinkEv"
+				"linux64"			"@_ZN19CEntityTouchManager26FrameUpdatePostEntityThinkEv"
 			}
 
 			"CalcAbsolutePosition"
 			{
 				"library"		"server"
 				"linux"			"@_ZN11CBaseEntity20CalcAbsolutePositionEv"
+				"linux64"			"@_ZN11CBaseEntity20CalcAbsolutePositionEv"
 			}
 
 			"MarkPartitionHandleDirty"
 			{
 				"library"		"server"
 				"linux"			"@_ZN18CCollisionProperty24MarkPartitionHandleDirtyEv"
+				"linux64"			"@_ZN18CCollisionProperty24MarkPartitionHandleDirtyEv"
 			}
 		}
 
@@ -108,12 +114,14 @@
 			"CServerNetworkableProperty::m_pOuter"
 			{
 				"linux"			"8"
+				"linux64"			"16"
 				"windows"		"8"
 			}
 
 			"CGameRules::EndGameFrame"
 			{
 				"linux"			"49"
+				"linux64"			"49"
 				"windows"		"48"
 			}
 		}
