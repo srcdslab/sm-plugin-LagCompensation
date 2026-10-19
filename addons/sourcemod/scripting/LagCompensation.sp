@@ -18,7 +18,7 @@ public Plugin myinfo =
 	name 			= "LagCompensation",
 	author 			= "BotoX, Vauff, .Rushaway, maxime1907",
 	description 	= "",
-	version 		= "1.1.2",
+	version 		= "1.1.3",
 	url 			= ""
 };
 
