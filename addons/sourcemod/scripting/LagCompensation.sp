@@ -18,7 +18,7 @@ public Plugin myinfo =
 	name 			= "LagCompensation",
 	author 			= "BotoX, Vauff, .Rushaway, maxime1907",
 	description 	= "",
-	version 		= "1.1.2",
+	version 		= "1.1.3",
 	url 			= ""
 };
 
@@ -160,7 +160,7 @@ int g_aaFilterClientSolidTouch[((MAXPLAYERS + 1) * MAX_EDICTS) / 32];
 int g_aBlockTriggerMoved[MAX_EDICTS / 32];
 int g_aBlacklisted[MAX_EDICTS / 32];
 
-Handle g_hCookie_LagCompSettings;
+Cookie g_hCookie_LagCompSettings;
 bool g_bDisableLagComp[MAXPLAYERS + 1];
 bool g_bPlayerLaserCompensated[MAXPLAYERS + 1];
 bool g_bLagCompMessages[MAXPLAYERS + 1];
@@ -339,11 +339,11 @@ public void OnPluginStart()
 	// Capability provider from https://github.com/alliedmodders/sourcemod/pull/1078
 	g_bHasOnEntitySpawned = GetFeatureStatus(FeatureType_Capability, "SDKHook_OnEntitySpawned") == FeatureStatus_Available;
 
-	HookConVarChange(g_cvCompenseEntityClass, OnConVarChanged);
-	HookConVarChange(g_cvCheckUserPing, OnConVarChanged);
-	HookConVarChange(g_cvMinimumPing, OnConVarChanged);
+	g_cvCompenseEntityClass.AddChangeHook(OnConVarChanged);
+	g_cvCheckUserPing.AddChangeHook(OnConVarChanged);
+	g_cvMinimumPing.AddChangeHook(OnConVarChanged);
 
-	g_hCookie_LagCompSettings = RegClientCookie("lagcomp_settings", "LagCompensation Settings", CookieAccess_Private);
+	g_hCookie_LagCompSettings = new Cookie("lagcomp_settings", "LagCompensation Settings", CookieAccess_Private);
 	RegConsoleCmd("sm_lagcomp", OnToggleLagCompSettings);
 	RegConsoleCmd("sm_0ping", OnToggleLagCompSettings);
 	RegConsoleCmd("sm_0pinglasers", OnToggleLagCompLasersSettings);
@@ -398,19 +398,19 @@ public void OnPluginEnd()
 
 public void OnConfigsExecuted()
 {
-	g_iCompenseEntityClass = GetConVarInt(g_cvCompenseEntityClass);
-	g_bCheckPing = GetConVarBool(g_cvCheckUserPing);
-	g_iMinPing = GetConVarInt(g_cvMinimumPing);
+	g_iCompenseEntityClass = g_cvCompenseEntityClass.IntValue;
+	g_bCheckPing = g_cvCheckUserPing.BoolValue;
+	g_iMinPing = g_cvMinimumPing.IntValue;
 }
 
 void OnConVarChanged(ConVar convar, const char[] oldValue, const char[] newValue)
 {
 	if (convar == g_cvCompenseEntityClass)
-		g_iCompenseEntityClass = GetConVarInt(convar);
+		g_iCompenseEntityClass = convar.IntValue;
 	else if (convar == g_cvCheckUserPing)
-		g_bCheckPing = GetConVarBool(convar);
+		g_bCheckPing = convar.BoolValue;
 	else if (convar == g_cvMinimumPing)
-		g_iMinPing = GetConVarInt(convar);
+		g_iMinPing = convar.IntValue;
 }
 
 public void OnMapStart()
@@ -1272,13 +1272,13 @@ void SaveLagCompSettings(int client)
 		g_bDisableLagComp[client] ? 1 : 0,
 		g_bPlayerLaserCompensated[client] ? 1 : 0,
 		g_bLagCompMessages[client] ? 1 : 0);
-	SetClientCookie(client, g_hCookie_LagCompSettings, sBuffer);
+	g_hCookie_LagCompSettings.Set(client, sBuffer);
 }
 
 void ParseClientCookie(int client, bool &disableLagComp, bool &playerLaserCompensated, bool &lagCompMessages)
 {
 	char buffer[16];
-	GetClientCookie(client, g_hCookie_LagCompSettings, buffer, sizeof(buffer));
+	g_hCookie_LagCompSettings.Get(client, buffer, sizeof(buffer));
 
 	// Parse chain format: disable|laser|messages
 	if (strlen(buffer) >= 3)
