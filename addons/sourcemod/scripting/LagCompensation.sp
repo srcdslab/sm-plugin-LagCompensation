@@ -18,7 +18,7 @@ public Plugin myinfo =
 	name 			= "LagCompensation",
 	author 			= "BotoX, Vauff, .Rushaway, maxime1907",
 	description 	= "",
-	version 		= "1.1.3",
+	version 		= "1.1.4",
 	url 			= ""
 };
 
@@ -172,6 +172,7 @@ ConVar g_cvMinimumPing;
 public void OnPluginStart()
 {
 	LoadTranslations("common.phrases");
+	LoadTranslations("LagCompensation.phrases");
 
 	g_cvCompenseEntityClass = CreateConVar("sm_lagcomp_entityclass", "0", "Only lagcompensate: [0 = All | 1 = func_physbox only]", _, true, 0.0, true, 1.0);
 	g_cvCheckUserPing = CreateConVar("sm_lagcomp_checkuserping", "0", "Check user's ping before lagcompensating them [0 = Disabled | 1 = Enabled]", _, true, 0.0, true, 1.0);
@@ -1300,7 +1301,7 @@ public Action Command_AddLagCompensation(int client, int argc)
 {
 	if (argc < 1)
 	{
-		ReplyToCommand(client, "[SM] Usage: sm_unlag <entidx> [late]");
+		ReplyToCommand(client, "[SM] %t", "Unlag Usage");
 		return Plugin_Handled;
 	}
 
@@ -1317,9 +1318,9 @@ public Action Command_AddLagCompensation(int client, int argc)
 	}
 
 	if (AddEntityForLagCompensation(entity, late))
-		ReplyToCommand(client, "[SM] Entity %d is now lag compensated.", entity);
+		ReplyToCommand(client, "[SM] %t", "Unlag Success", entity);
 	else
-		ReplyToCommand(client, "[SM] Could not lag compensate invalid entity %d.", entity);
+		ReplyToCommand(client, "[SM] %t", "Unlag Failed", entity);
 
 	return Plugin_Handled;
 }
@@ -1458,7 +1459,7 @@ public void ToggleLagCompSettings(int client)
 	g_bDisableLagComp[client] = !g_bDisableLagComp[client];
 	SaveLagCompSettings(client);
 
-	CPrintToChat(client, "%s LagCompensation has been %s.", PREFIX, g_bDisableLagComp[client] ? "disabled" : "enabled");
+	CPrintToChat(client, "%s %t", PREFIX, g_bDisableLagComp[client] ? "LagComp Toggled Disabled" : "LagComp Toggled Enabled");
 }
 
 public void ToggleLagCompLasers(int client)
@@ -1469,9 +1470,9 @@ public void ToggleLagCompLasers(int client)
 	g_bPlayerLaserCompensated[client] = !g_bPlayerLaserCompensated[client];
 	SaveLagCompSettings(client);
 
-	CPrintToChat(client, "%s LagCompensation for Lasers has been %s.", PREFIX, g_bPlayerLaserCompensated[client] ? "enabled" : "disabled");
+	CPrintToChat(client, "%s %t", PREFIX, g_bPlayerLaserCompensated[client] ? "LagComp Lasers Toggled Enabled" : "LagComp Lasers Toggled Disabled");
 	if (g_bCheckPing && g_bPlayerLaserCompensated[client])
-		CPrintToChat(client, "%s It will take effect if your real ping is higher than %dms.", PREFIX, g_iMinPing);
+		CPrintToChat(client, "%s %t", PREFIX, "LagComp Lasers Ping Notice", g_iMinPing);
 }
 
 public void ToggleLagCompMessages(int client)
@@ -1482,20 +1483,18 @@ public void ToggleLagCompMessages(int client)
 	g_bLagCompMessages[client] = !g_bLagCompMessages[client];
 	SaveLagCompSettings(client);
 
-	CPrintToChat(client, "%s LagCompensation messages have been %s.", PREFIX, g_bLagCompMessages[client] ? "enabled" : "disabled");
+	CPrintToChat(client, "%s %t", PREFIX, g_bLagCompMessages[client] ? "LagComp Messages Toggled Enabled" : "LagComp Messages Toggled Disabled");
 }
 
 public Action CheckLagComp(int client, int args)
 {
 	if (args > 1)
 	{
-		CPrintToChat(client, "%s Usage sm_checklag <client>", PREFIX);
+		CPrintToChat(client, "%s %t", PREFIX, "CheckLag Usage");
 		return Plugin_Handled;
 	}
 
 	int target = -1;
-	char sEnable[64];
-	FormatEx(sEnable, sizeof(sEnable), "enabled (%s)", g_iCompenseEntityClass == 0 ? "Triggers and func_physbox" : "func_physbox only");
 
 	if (args == 0)
 		target = client;
@@ -1508,11 +1507,14 @@ public Action CheckLagComp(int client, int args)
 
 	if (target == -1)
 	{
-		CReplyToCommand(client, "%s Invalid target.", PREFIX);
+		CReplyToCommand(client, "%s %t", PREFIX, "CheckLag Invalid Target");
 		return Plugin_Handled;
 	}
 
-	CPrintToChat(client, "%s LagCompensation is %s for {olive}%N", PREFIX, g_bDisableLagComp[target] ? "disabled" : sEnable, target);
+	if (g_bDisableLagComp[target])
+		CPrintToChat(client, "%s %t", PREFIX, "CheckLag Disabled", target);
+	else
+		CPrintToChat(client, "%s %t", PREFIX, g_iCompenseEntityClass == 0 ? "CheckLag Enabled Triggers" : "CheckLag Enabled Physbox", target);
 
 	return Plugin_Handled;
 }
@@ -1520,13 +1522,13 @@ public Action CheckLagComp(int client, int args)
 public void ShowSettingsMenu(int client)
 {
 	Menu menu = new Menu(MenuHandler_MainMenu);
-	menu.SetTitle("LagCompensation Settings", client);
+	menu.SetTitle("%T", "LagComp Menu Title", client);
 	menu.ExitBackButton = true;
 
 	char buffer[128], buffer_lasers[128], msg_buffer[128];
-	Format(buffer, sizeof(buffer), "LagCompensation: %s", g_bDisableLagComp[client] ? "Disabled" : "Enabled");
-	Format(buffer_lasers, sizeof(buffer_lasers), "LagCompensation for Lasers: %s", g_bPlayerLaserCompensated[client] ? "Enabled" : "Disabled");
-	Format(msg_buffer, sizeof(msg_buffer), "LagCompensation Messages: %s", g_bLagCompMessages[client] ? "Enabled" : "Disabled");
+	Format(buffer, sizeof(buffer), "%T", g_bDisableLagComp[client] ? "LagComp Menu Disabled" : "LagComp Menu Enabled", client);
+	Format(buffer_lasers, sizeof(buffer_lasers), "%T", g_bPlayerLaserCompensated[client] ? "LagComp Menu Lasers Enabled" : "LagComp Menu Lasers Disabled", client);
+	Format(msg_buffer, sizeof(msg_buffer), "%T", g_bLagCompMessages[client] ? "LagComp Menu Messages Enabled" : "LagComp Menu Messages Disabled", client);
 
 	menu.AddItem("0", buffer);
 	menu.AddItem("1", buffer_lasers);
@@ -1541,7 +1543,7 @@ public void MenuHandler_CookieMenu(int client, CookieMenuAction action, any info
 	{
 		case (CookieMenuAction_DisplayOption):
 		{
-			Format(buffer, maxlen, "LagCompensation", client);
+			Format(buffer, maxlen, "%T", "LagComp Cookie Menu", client);
 		}
 		case (CookieMenuAction_SelectOption):
 		{
