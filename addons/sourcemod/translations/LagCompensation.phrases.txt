@@ -1,0 +1,261 @@
+"Phrases"
+{
+	"Unlag Usage"
+	{
+		"en"		"Usage: sm_unlag <entidx> [late]"
+		"fr"		"Utilisation : sm_unlag <entidx> [late]"
+		"ru"		"Использование: sm_unlag <entidx> [late]"
+		"es"		"Uso: sm_unlag <entidx> [late]"
+		"de"		"Verwendung: sm_unlag <entidx> [late]"
+		"pt"		"Uso: sm_unlag <entidx> [late]"
+		"chi"		"用法：sm_unlag <entidx> [late]"
+	}
+
+	"Unlag Success"
+	{
+		"#format"	"{1:d}"
+		"en"		"Entity {1} is now lag compensated."
+		"fr"		"L'entité {1} est maintenant soumise à la compensation du lag."
+		"ru"		"Для сущности {1} теперь включена компенсация лагов."
+		"es"		"La entidad {1} ahora tiene compensación de lag."
+		"de"		"Entität {1} wird jetzt lag-kompensiert."
+		"pt"		"A entidade {1} agora tem compensação de lag."
+		"chi"		"实体 {1} 现已启用延迟补偿。"
+	}
+
+	"Unlag Failed"
+	{
+		"#format"	"{1:d}"
+		"en"		"Could not lag compensate invalid entity {1}."
+		"fr"		"Impossible d'appliquer la compensation du lag à l'entité invalide {1}."
+		"ru"		"Не удалось включить компенсацию лагов для неверной сущности {1}."
+		"es"		"No se pudo aplicar la compensación de lag a la entidad inválida {1}."
+		"de"		"Die ungültige Entität {1} konnte nicht lag-kompensiert werden."
+		"pt"		"Não foi possível aplicar a compensação de lag à entidade inválida {1}."
+		"chi"		"无法为无效实体 {1} 启用延迟补偿。"
+	}
+
+	"LagComp Toggled Enabled"
+	{
+		"en"		"LagCompensation has been enabled."
+		"fr"		"La compensation du lag a été activée."
+		"ru"		"Компенсация лагов включена."
+		"es"		"La compensación de lag ha sido activada."
+		"de"		"Die Lag-Kompensation wurde aktiviert."
+		"pt"		"A compensação de lag foi ativada."
+		"chi"		"延迟补偿已启用。"
+	}
+
+	"LagComp Toggled Disabled"
+	{
+		"en"		"LagCompensation has been disabled."
+		"fr"		"La compensation du lag a été désactivée."
+		"ru"		"Компенсация лагов отключена."
+		"es"		"La compensación de lag ha sido desactivada."
+		"de"		"Die Lag-Kompensation wurde deaktiviert."
+		"pt"		"A compensação de lag foi desativada."
+		"chi"		"延迟补偿已禁用。"
+	}
+
+	"LagComp Lasers Toggled Enabled"
+	{
+		"en"		"LagCompensation for lasers has been enabled."
+		"fr"		"La compensation du lag pour les lasers a été activée."
+		"ru"		"Компенсация лагов для лазеров включена."
+		"es"		"La compensación de lag para láseres ha sido activada."
+		"de"		"Die Lag-Kompensation für Laser wurde aktiviert."
+		"pt"		"A compensação de lag para lasers foi ativada."
+		"chi"		"激光延迟补偿已启用。"
+	}
+
+	"LagComp Lasers Toggled Disabled"
+	{
+		"en"		"LagCompensation for lasers has been disabled."
+		"fr"		"La compensation du lag pour les lasers a été désactivée."
+		"ru"		"Компенсация лагов для лазеров отключена."
+		"es"		"La compensación de lag para láseres ha sido desactivada."
+		"de"		"Die Lag-Kompensation für Laser wurde deaktiviert."
+		"pt"		"A compensação de lag para lasers foi desativada."
+		"chi"		"激光延迟补偿已禁用。"
+	}
+
+	"LagComp Lasers Ping Notice"
+	{
+		"#format"	"{1:d}"
+		"en"		"It will take effect if your real ping is higher than {1}ms."
+		"fr"		"Elle prendra effet si votre ping réel est supérieur à {1} ms."
+		"ru"		"Она сработает, если ваш реальный пинг выше {1} мс."
+		"es"		"Tendrá efecto si tu ping real es mayor que {1} ms."
+		"de"		"Sie wirkt nur, wenn dein echter Ping höher als {1} ms ist."
+		"pt"		"Ela terá efeito se o seu ping real for maior que {1} ms."
+		"chi"		"仅当你的实际延迟高于 {1} 毫秒时才会生效。"
+	}
+
+	"LagComp Messages Toggled Enabled"
+	{
+		"en"		"LagCompensation messages have been enabled."
+		"fr"		"Les messages de compensation du lag ont été activés."
+		"ru"		"Сообщения компенсации лагов включены."
+		"es"		"Los mensajes de compensación de lag han sido activados."
+		"de"		"Die Lag-Kompensations-Nachrichten wurden aktiviert."
+		"pt"		"As mensagens de compensação de lag foram ativadas."
+		"chi"		"延迟补偿消息已启用。"
+	}
+
+	"LagComp Messages Toggled Disabled"
+	{
+		"en"		"LagCompensation messages have been disabled."
+		"fr"		"Les messages de compensation du lag ont été désactivés."
+		"ru"		"Сообщения компенсации лагов отключены."
+		"es"		"Los mensajes de compensación de lag han sido desactivados."
+		"de"		"Die Lag-Kompensations-Nachrichten wurden deaktiviert."
+		"pt"		"As mensagens de compensação de lag foram desativadas."
+		"chi"		"延迟补偿消息已禁用。"
+	}
+
+	"CheckLag Usage"
+	{
+		"en"		"Usage: sm_checklag <client>"
+		"fr"		"Utilisation : sm_checklag <client>"
+		"ru"		"Использование: sm_checklag <client>"
+		"es"		"Uso: sm_checklag <client>"
+		"de"		"Verwendung: sm_checklag <client>"
+		"pt"		"Uso: sm_checklag <client>"
+		"chi"		"用法：sm_checklag <client>"
+	}
+
+	"CheckLag Invalid Target"
+	{
+		"en"		"Invalid target."
+		"fr"		"Cible invalide."
+		"ru"		"Неверная цель."
+		"es"		"Objetivo inválido."
+		"de"		"Ungültiges Ziel."
+		"pt"		"Alvo inválido."
+		"chi"		"无效的目标。"
+	}
+
+	"CheckLag Disabled"
+	{
+		"#format"	"{1:N}"
+		"en"		"LagCompensation is disabled for {olive}{1}"
+		"fr"		"La compensation du lag est désactivée pour {olive}{1}"
+		"ru"		"Компенсация лагов отключена для {olive}{1}"
+		"es"		"La compensación de lag está desactivada para {olive}{1}"
+		"de"		"Lag-Kompensation für {olive}{1}{default}: deaktiviert"
+		"pt"		"A compensação de lag está desativada para {olive}{1}"
+		"chi"		"{olive}{1} {default}的延迟补偿已禁用"
+	}
+
+	"CheckLag Enabled Triggers"
+	{
+		"#format"	"{1:N}"
+		"en"		"LagCompensation is enabled (triggers and func_physbox) for {olive}{1}"
+		"fr"		"La compensation du lag est activée (triggers et func_physbox) pour {olive}{1}"
+		"ru"		"Компенсация лагов включена (триггеры и func_physbox) для {olive}{1}"
+		"es"		"La compensación de lag está activada (triggers y func_physbox) para {olive}{1}"
+		"de"		"Lag-Kompensation für {olive}{1}{default}: aktiviert (Trigger und func_physbox)"
+		"pt"		"A compensação de lag está ativada (triggers e func_physbox) para {olive}{1}"
+		"chi"		"{olive}{1} {default}的延迟补偿已启用（触发器和 func_physbox）"
+	}
+
+	"CheckLag Enabled Physbox"
+	{
+		"#format"	"{1:N}"
+		"en"		"LagCompensation is enabled (func_physbox only) for {olive}{1}"
+		"fr"		"La compensation du lag est activée (func_physbox uniquement) pour {olive}{1}"
+		"ru"		"Компенсация лагов включена (только func_physbox) для {olive}{1}"
+		"es"		"La compensación de lag está activada (solo func_physbox) para {olive}{1}"
+		"de"		"Lag-Kompensation für {olive}{1}{default}: aktiviert (nur func_physbox)"
+		"pt"		"A compensação de lag está ativada (apenas func_physbox) para {olive}{1}"
+		"chi"		"{olive}{1} {default}的延迟补偿已启用（仅 func_physbox）"
+	}
+
+	"LagComp Menu Title"
+	{
+		"en"		"LagCompensation Settings"
+		"fr"		"Paramètres de compensation du lag"
+		"ru"		"Настройки компенсации лагов"
+		"es"		"Ajustes de compensación de lag"
+		"de"		"Lag-Kompensation-Einstellungen"
+		"pt"		"Configurações de compensação de lag"
+		"chi"		"延迟补偿设置"
+	}
+
+	"LagComp Menu Enabled"
+	{
+		"en"		"LagCompensation: Enabled"
+		"fr"		"Compensation du lag : activée"
+		"ru"		"Компенсация лагов: включена"
+		"es"		"Compensación de lag: activada"
+		"de"		"Lag-Kompensation: aktiviert"
+		"pt"		"Compensação de lag: ativada"
+		"chi"		"延迟补偿：已启用"
+	}
+
+	"LagComp Menu Disabled"
+	{
+		"en"		"LagCompensation: Disabled"
+		"fr"		"Compensation du lag : désactivée"
+		"ru"		"Компенсация лагов: отключена"
+		"es"		"Compensación de lag: desactivada"
+		"de"		"Lag-Kompensation: deaktiviert"
+		"pt"		"Compensação de lag: desativada"
+		"chi"		"延迟补偿：已禁用"
+	}
+
+	"LagComp Menu Lasers Enabled"
+	{
+		"en"		"LagCompensation for Lasers: Enabled"
+		"fr"		"Compensation du lag pour les lasers : activée"
+		"ru"		"Компенсация лагов для лазеров: включена"
+		"es"		"Compensación de lag para láseres: activada"
+		"de"		"Lag-Kompensation für Laser: aktiviert"
+		"pt"		"Compensação de lag para lasers: ativada"
+		"chi"		"激光延迟补偿：已启用"
+	}
+
+	"LagComp Menu Lasers Disabled"
+	{
+		"en"		"LagCompensation for Lasers: Disabled"
+		"fr"		"Compensation du lag pour les lasers : désactivée"
+		"ru"		"Компенсация лагов для лазеров: отключена"
+		"es"		"Compensación de lag para láseres: desactivada"
+		"de"		"Lag-Kompensation für Laser: deaktiviert"
+		"pt"		"Compensação de lag para lasers: desativada"
+		"chi"		"激光延迟补偿：已禁用"
+	}
+
+	"LagComp Menu Messages Enabled"
+	{
+		"en"		"LagCompensation Messages: Enabled"
+		"fr"		"Messages de compensation du lag : activés"
+		"ru"		"Сообщения компенсации лагов: включены"
+		"es"		"Mensajes de compensación de lag: activados"
+		"de"		"Lag-Kompensations-Nachrichten: aktiviert"
+		"pt"		"Mensagens de compensação de lag: ativadas"
+		"chi"		"延迟补偿消息：已启用"
+	}
+
+	"LagComp Menu Messages Disabled"
+	{
+		"en"		"LagCompensation Messages: Disabled"
+		"fr"		"Messages de compensation du lag : désactivés"
+		"ru"		"Сообщения компенсации лагов: отключены"
+		"es"		"Mensajes de compensación de lag: desactivados"
+		"de"		"Lag-Kompensations-Nachrichten: deaktiviert"
+		"pt"		"Mensagens de compensação de lag: desativadas"
+		"chi"		"延迟补偿消息：已禁用"
+	}
+
+	"LagComp Cookie Menu"
+	{
+		"en"		"LagCompensation"
+		"fr"		"Compensation du lag"
+		"ru"		"Компенсация лагов"
+		"es"		"Compensación de lag"
+		"de"		"Lag-Kompensation"
+		"pt"		"Compensação de lag"
+		"chi"		"延迟补偿"
+	}
+}
