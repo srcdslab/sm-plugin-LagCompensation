@@ -18,7 +18,7 @@ public Plugin myinfo =
 	name 			= "LagCompensation",
 	author 			= "BotoX, Vauff, .Rushaway, maxime1907",
 	description 	= "",
-	version 		= "1.1.4",
+	version 		= "1.1.5",
 	url 			= ""
 };
 
@@ -1396,12 +1396,12 @@ stock void PrintToBoth(const char[] format, any ...)
 {
 	char buffer[254];
 	VFormat(buffer, sizeof(buffer), format, 2);
-	LogMessage(buffer);
+	LogMessage("%s", buffer);
 
 	for (int client = 1; client <= MaxClients; client++)
 	{
 		if (IsClientInGame(client) && g_bLagCompMessages[client] && CheckCommandAccess(client, "sm_lagged", ADMFLAG_ROOT))
-			PrintToConsole(client, buffer);
+			PrintToConsole(client, "%s", buffer);
 	}
 }
 
@@ -1488,9 +1488,9 @@ public void ToggleLagCompMessages(int client)
 
 public Action CheckLagComp(int client, int args)
 {
-	if (args > 1)
+	if (args > 1 || (args == 0 && !client))
 	{
-		CPrintToChat(client, "%s %t", PREFIX, "CheckLag Usage");
+		CReplyToCommand(client, "%s %t", PREFIX, "CheckLag Usage");
 		return Plugin_Handled;
 	}
 
@@ -1506,15 +1506,12 @@ public Action CheckLagComp(int client, int args)
 	}
 
 	if (target == -1)
-	{
-		CReplyToCommand(client, "%s %t", PREFIX, "CheckLag Invalid Target");
 		return Plugin_Handled;
-	}
 
 	if (g_bDisableLagComp[target])
-		CPrintToChat(client, "%s %t", PREFIX, "CheckLag Disabled", target);
+		CReplyToCommand(client, "%s %t", PREFIX, "CheckLag Disabled", target);
 	else
-		CPrintToChat(client, "%s %t", PREFIX, g_iCompenseEntityClass == 0 ? "CheckLag Enabled Triggers" : "CheckLag Enabled Physbox", target);
+		CReplyToCommand(client, "%s %t", PREFIX, g_iCompenseEntityClass == 0 ? "CheckLag Enabled Triggers" : "CheckLag Enabled Physbox", target);
 
 	return Plugin_Handled;
 }

@@ -124,17 +124,6 @@
 		"chi"		"用法：sm_checklag <client>"
 	}
 
-	"CheckLag Invalid Target"
-	{
-		"en"		"Invalid target."
-		"fr"		"Cible invalide."
-		"ru"		"Неверная цель."
-		"es"		"Objetivo inválido."
-		"de"		"Ungültiges Ziel."
-		"pt"		"Alvo inválido."
-		"chi"		"无效的目标。"
-	}
-
 	"CheckLag Disabled"
 	{
 		"#format"	"{1:N}"
